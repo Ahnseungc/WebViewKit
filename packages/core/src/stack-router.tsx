@@ -1,13 +1,10 @@
 import React from "react";
+import { history } from "./history";
 
-const StackRouter = () => {
+const StackRouter = (children: React.ReactNode) => {
   //TODO
 
-  return (
-    <div>
-      <h1>StackRouter</h1>
-    </div>
-  );
+  return <div>{children}</div>;
 };
 
 export default StackRouter;

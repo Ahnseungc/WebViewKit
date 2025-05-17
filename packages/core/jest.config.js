@@ -1,7 +1,7 @@
 module.exports = {
   displayName: "core",
   preset: "ts-jest",
-  testEnvironment: "node",
+  testEnvironment: "jsdom",
   testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
   transform: {
     "^.+\\.ts$": "ts-jest",
