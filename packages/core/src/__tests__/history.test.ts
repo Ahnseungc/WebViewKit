@@ -1,4 +1,5 @@
-import { history, HistoryState } from "../history";
+import { history } from "../history";
+import { HistoryState } from "../type";
 
 // mocking window.history
 const mockHistory = {
@@ -40,7 +41,7 @@ describe("history", () => {
       history.push(path, data);
 
       expect(mockHistory.pushState).toHaveBeenCalledWith(
-        { path, data },
+        { path, data, action: "PUSH" },
         "",
         path
       );
@@ -48,13 +49,13 @@ describe("history", () => {
   });
 
   describe("replace", () => {
-    it("should push new history entry", () => {
+    it("should replace current history entry", () => {
       const path = "/test";
       const data = { title: "Test" };
       history.replace(path, data);
 
       expect(mockHistory.replaceState).toHaveBeenCalledWith(
-        { path, data },
+        { path, data, action: "REPLACE" },
         "",
         path
       );

@@ -57,8 +57,8 @@ describe("BackRouter", () => {
 
     // Check if SVG has correct attributes
     const svg = button.querySelector("svg");
-    expect(svg).toHaveAttribute("width", "24");
-    expect(svg).toHaveAttribute("height", "24");
+    expect(svg).toHaveAttribute("width", "32");
+    expect(svg).toHaveAttribute("height", "32");
     expect(svg).toHaveAttribute("viewBox", "0 0 24 24");
   });
 

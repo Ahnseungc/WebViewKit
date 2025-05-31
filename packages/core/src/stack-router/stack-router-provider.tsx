@@ -137,7 +137,7 @@ const StackRouter = ({
   return (
     <StackRouterContext.Provider value={value}>
       <LayoutContainer>
-        <Layout maxWidth={maxWidth}>
+        <Layout maxWidth={maxWidth} as="div" data-testid="layout">
           <PageContainer>
             {visiblePages.map((page, index) => (
               <PageWrapper
