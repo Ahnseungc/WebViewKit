@@ -1,9 +1,4 @@
-export interface HistoryState {
-  path: string;
-  data?: any;
-}
-
-type HistoryListener = (state: HistoryState) => void;
+import { HistoryAction, HistoryListener, HistoryState } from "./type";
 
 const listeners = new Set<HistoryListener>();
 
@@ -22,38 +17,69 @@ window.addEventListener("popstate", handlePopState);
 
 export const history = {
   // add new history entry
-  push: (path: string, data?: any) => {
+  push: async (path: string, data?: any) => {
     const state: HistoryState = {
       path,
       data,
+      action: HistoryAction.PUSH,
     };
     window.history.pushState(state, "", path);
+    // 애니메이션을 위한 지연
+    await new Promise((resolve) => setTimeout(resolve, 300));
     notifyListeners(state);
   },
 
   // replace current history entry
-  replace: (path: string, data: any) => {
+  replace: async (path: string, data: any) => {
     const state: HistoryState = {
       path,
       data,
+      action: HistoryAction.REPLACE,
     };
     window.history.replaceState(state, "", path);
+    await new Promise((resolve) => setTimeout(resolve, 300));
     notifyListeners(state);
   },
 
   // back to previous history entry
-  back: () => {
+  back: async () => {
     window.history.back();
+
+    await new Promise<void>((resolve) => {
+      const handlePopState = () => {
+        window.removeEventListener("popstate", handlePopState);
+        resolve();
+      };
+      window.addEventListener("popstate", handlePopState);
+    });
+
+    const state: HistoryState = {
+      path: window.location.pathname,
+      action: HistoryAction.POP,
+    };
+    notifyListeners(state);
   },
 
   // forward to next history entry
-  forward: () => {
+  forward: async () => {
     window.history.forward();
+    const state: HistoryState = {
+      path: window.location.pathname,
+      action: HistoryAction.PUSH,
+    };
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    notifyListeners(state);
   },
 
   // go to specific history entry
-  go: (delta: number) => {
+  go: async (delta: number) => {
     window.history.go(delta);
+    const state: HistoryState = {
+      path: window.location.pathname,
+      action: HistoryAction.PUSH,
+    };
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    notifyListeners(state);
   },
 
   // get current history entry
