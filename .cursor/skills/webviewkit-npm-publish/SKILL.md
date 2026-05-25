@@ -27,8 +27,10 @@ npm pack --dry-run   # dist/** 20+ files required
 ### CI (권장): Trusted Publisher + GitHub Actions
 
 - npm 패키지 Settings → Trusted Publisher: `Ahnseungc/WebViewKit`, workflow `publish.yml`
-- 태그 푸시: `git tag v1.2.0 && git push origin v1.2.0`
-- 또는 Actions 탭에서 **Publish to npm** → **Run workflow** (수동)
+- 태그 푸시 (npm publish + GitHub Release): `git tag v1.2.0 && git push origin v1.2.0`
+  - 태그 `v*`는 `packages/core/package.json` `version`과 일치해야 함
+  - Release 본문은 `CHANGELOG.md` 해당 버전 섹션에서 자동 추출
+- Actions **Run workflow** (수동): npm만, GitHub Release는 태그 푸시 시에만 생성
 
 ### 로컬 (2FA OTP 필요)
 
