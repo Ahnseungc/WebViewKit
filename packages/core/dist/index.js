@@ -1,10 +1,22 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.WebViewCore = exports.version = void 0;
-exports.version = "0.1.0";
-class WebViewCore {
-    constructor() {
-        // Initialize core WebView functionality
-    }
-}
-exports.WebViewCore = WebViewCore;
+exports.StackDevRoadmap = exports.StackHeader = exports.BackRouter = exports.useStackRouter = exports.StackRouterProvider = exports.history = exports.HistoryAction = exports.Direction = exports.STACK_TRANSITION_MS = void 0;
+var constants_1 = require("./constants");
+Object.defineProperty(exports, "STACK_TRANSITION_MS", { enumerable: true, get: function () { return constants_1.STACK_TRANSITION_MS; } });
+var type_1 = require("./type");
+Object.defineProperty(exports, "Direction", { enumerable: true, get: function () { return type_1.Direction; } });
+Object.defineProperty(exports, "HistoryAction", { enumerable: true, get: function () { return type_1.HistoryAction; } });
+var history_1 = require("./history");
+Object.defineProperty(exports, "history", { enumerable: true, get: function () { return history_1.history; } });
+var stack_router_provider_1 = require("./stack-router/stack-router-provider");
+Object.defineProperty(exports, "StackRouterProvider", { enumerable: true, get: function () { return __importDefault(stack_router_provider_1).default; } });
+Object.defineProperty(exports, "useStackRouter", { enumerable: true, get: function () { return stack_router_provider_1.useStackRouter; } });
+var back_router_1 = require("./stack-router/_components/back-router");
+Object.defineProperty(exports, "BackRouter", { enumerable: true, get: function () { return __importDefault(back_router_1).default; } });
+var header_1 = require("./stack-router/_components/header");
+Object.defineProperty(exports, "StackHeader", { enumerable: true, get: function () { return __importDefault(header_1).default; } });
+var stack_dev_roadmap_1 = require("./stack-dev/stack-dev-roadmap");
+Object.defineProperty(exports, "StackDevRoadmap", { enumerable: true, get: function () { return stack_dev_roadmap_1.StackDevRoadmap; } });

@@ -10,6 +10,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <div style={{ width: "100%", height: "100vh" }}>
       <StackRouterProvider
         maxWidth="600px"
+        enableDevTools
         Activities={[
           {
             path: "/",

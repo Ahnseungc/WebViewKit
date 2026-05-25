@@ -6,7 +6,7 @@ import {
   act,
   waitFor,
 } from "@testing-library/react";
-import StackRouter, {
+import StackRouterProvider, {
   useStackRouter,
 } from "../stack-router/stack-router-provider";
 import { history } from "../history";
@@ -70,7 +70,7 @@ const waitForStateUpdate = async () => {
 describe("StackRouter", () => {
   it("renders initial page correctly", () => {
     render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -81,7 +81,7 @@ describe("StackRouter", () => {
 
   it("navigates to new page when push is called", async () => {
     render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -100,7 +100,7 @@ describe("StackRouter", () => {
 
   it("goes back when back is called", async () => {
     render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -125,7 +125,7 @@ describe("StackRouter", () => {
 
   it("handles multiple page transitions correctly", async () => {
     render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -172,7 +172,7 @@ describe("StackRouter", () => {
 
   it("maintains correct page order in stack", async () => {
     const { rerender } = render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -201,7 +201,7 @@ describe("StackRouter", () => {
 
   it("handles maxWidth prop correctly", () => {
     render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
         maxWidth="800px"

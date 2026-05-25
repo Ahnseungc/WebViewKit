@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { history } from "../history";
 import styled from "@emotion/styled";
 import { keyframes, css } from "@emotion/react";
+import { STACK_TRANSITION_MS } from "../constants";
+import { StackDevRoadmap } from "../stack-dev/stack-dev-roadmap";
 import {
   HistoryAction,
   HistoryState,
@@ -33,11 +35,16 @@ export const useStackRouter = () => {
   return context;
 };
 
-const StackRouter = ({
+const StackRouterProvider = ({
   maxWidth = "600px",
   Activities = [],
   initialActivity,
+  enableDevTools,
 }: StackRouterProviderProps) => {
+  const showDevTools = useMemo(() => {
+    if (enableDevTools !== undefined) return enableDevTools;
+    return typeof process !== "undefined" && process.env?.NODE_ENV === "development";
+  }, [enableDevTools]);
   const [currentPath, setCurrentPath] = useState(
     history.getCurrentState().path
   );
@@ -84,7 +91,7 @@ const StackRouter = ({
 
     setTimeout(() => {
       setVisiblePages((prev) => prev.slice(0, -1));
-    }, 500);
+    }, STACK_TRANSITION_MS);
     history.back();
   };
 
@@ -116,7 +123,7 @@ const StackRouter = ({
       });
       setTimeout(() => {
         setCurrentPath(path);
-      }, 500);
+      }, STACK_TRANSITION_MS);
     }
 
     history.push(path, data);
@@ -155,11 +162,17 @@ const StackRouter = ({
           </PageContainer>
         </Layout>
       </LayoutContainer>
+      <StackDevRoadmap
+        visible={showDevTools}
+        pages={visiblePages.map((p) => ({ path: p.path }))}
+        currentPath={currentPath}
+      />
     </StackRouterContext.Provider>
   );
 };
 
-export default StackRouter;
+export default StackRouterProvider;
+export { StackRouterProvider };
 
 /**styles */
 const LayoutContainer = styled.div`
@@ -264,23 +277,23 @@ const PageWrapper = styled.div<{
     if (direction === "forward") {
       if (isExiting) {
         return css`
-          ${slideInRight} 0.7s ease-in-out forwards
+          ${slideInRight} ${STACK_TRANSITION_MS}ms ease-in-out forwards
         `;
       }
       if (isEntering) {
         return css`
-          ${slideOutLeft} 0.7s ease-in-out forwards
+          ${slideOutLeft} ${STACK_TRANSITION_MS}ms ease-in-out forwards
         `;
       }
     } else {
       if (isExiting) {
         return css`
-          ${slideOutRight} 0.7s ease-in-out forwards
+          ${slideOutRight} ${STACK_TRANSITION_MS}ms ease-in-out forwards
         `;
       }
       if (isEntering) {
         return css`
-          ${slideInLeft} 0.7s ease-in-out forwards
+          ${slideInLeft} ${STACK_TRANSITION_MS}ms ease-in-out forwards
         `;
       }
     }

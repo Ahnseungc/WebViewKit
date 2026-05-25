@@ -1,14 +1,45 @@
 {
-  "name": "@webview/core",
-  "version": "0.1.0",
-  "description": "Core WebView functionality",
+  "name": "@ahnseungchan/webviewkit",
+  "version": "1.1.0",
+  "description": "Stack-based navigation for React WebView apps with dev stack roadmap",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
   "scripts": {
-    "build": "tsc",
-    "test": "jest src/__tests__",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "jest --config jest.config.js",
     "clean": "rimraf dist",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts,.tsx",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "webview",
+    "navigation",
+    "stack-router",
+    "react",
+    "mobile",
+    "router",
+    "react-native-webview"
+  ],
+  "author": "Seungchan Ahn <omnipoo@naver.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Ahnseungc/WebViewKit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Ahnseungc/WebViewKit/issues"
+  },
+  "homepage": "https://github.com/Ahnseungc/WebViewKit#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@emotion/react": ">=11.0.0",
+    "@emotion/styled": ">=11.0.0",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
   },
   "devDependencies": {
     "@emotion/babel-plugin": "^11.11.0",
@@ -18,12 +49,14 @@
     "@testing-library/react": "^14.2.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.12",
+    "@types/react": "^18.3.21",
+    "@types/react-dom": "^18.3.7",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "rimraf": "^5.0.5",
-    "ts-jest": "^29.1.2"
-  },
-  "dependencies": {
-    "gsap": "^3.13.0"
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.3.3"
   }
 }

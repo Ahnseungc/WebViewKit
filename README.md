@@ -1,40 +1,43 @@
-# WebView Monorepo
+# WebViewKit
 
-A monorepo containing WebView-related packages.
+모노레포 — npm 패키지 [`@ahnseungchan/webviewkit`](https://www.npmjs.com/package/@ahnseungchan/webviewkit)
+
+React WebView에서 네이티브 앱처럼 **스택 push/back** 네비게이션을 구현합니다.
 
 ## Packages
 
-- `@webview/core`: Core WebView functionality
+| 패키지 | 설명 |
+|--------|------|
+| `@ahnseungchan/webviewkit` | 스택 라우터 + history + **Dev Stack Roadmap** |
+| `@webviewkit/browser` | Vite 데모 앱 |
 
-## Development
+## 개발
 
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
+```bash
+pnpm install
+pnpm build
+pnpm test
+```
 
-2. Build all packages:
-   ```bash
-   pnpm build
-   ```
+## npm 배포
 
-3. Run tests:
-   ```bash
-   pnpm test
-   ```
+```bash
+cd packages/core
+npm run build
+npm publish --access public
+# 또는 루트: pnpm publish:webviewkit
+```
 
-4. Run linting:
-   ```bash
-   pnpm lint
-   ```
+## 커밋 히스토리 요약
 
-## Adding a New Package
+| 날짜 | 내용 |
+|------|------|
+| 2025-05-17 | history, browser 예제 |
+| 2025-05-31 | stack-router 구조·테스트 |
+| 2026-05-25 | v1.1.0 — dev roadmap, 빌드/npm 수정, gsap 제거 |
 
-1. Create a new directory in `packages/`
-2. Initialize the package with `pnpm init`
-3. Add necessary dependencies
-4. Update the package.json with appropriate scripts and configuration
+자세한 변경: [CHANGELOG.md](./CHANGELOG.md) · [packages/core/README.md](./packages/core/README.md)
 
 ## License
 
-MIT 
+MIT

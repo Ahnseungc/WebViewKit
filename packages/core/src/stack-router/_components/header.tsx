@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
 import BackRouter from "./back-router";
 import { useStackRouter } from "../stack-router-provider";
+import { STACK_TRANSITION_MS } from "../../constants";
 
 const Header = () => {
   const { currentPath, visiblePages } = useStackRouter();
@@ -12,7 +13,7 @@ const Header = () => {
     const timer = setTimeout(() => {
       setDisplayPath(currentPath);
       setIsVisible(visiblePages.length > 1);
-    }, 500);
+    }, STACK_TRANSITION_MS);
     return () => clearTimeout(timer);
   }, [currentPath, visiblePages]);
 

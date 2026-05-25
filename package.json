@@ -2,10 +2,11 @@
   "name": "webview-monorepo",
   "private": true,
   "scripts": {
-    "build": "pnpm -r build",
-    "test": "pnpm -r test",
-    "lint": "pnpm -r lint",
-    "clean": "pnpm -r clean"
+    "build": "pnpm --filter @ahnseungchan/webviewkit build",
+    "test": "pnpm --filter @ahnseungchan/webviewkit test",
+    "lint": "pnpm --filter @ahnseungchan/webviewkit lint",
+    "clean": "pnpm --filter @ahnseungchan/webviewkit clean",
+    "publish:webviewkit": "pnpm --filter @ahnseungchan/webviewkit publish --access public"
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
@@ -25,8 +26,5 @@
     "ts-jest": "^29.3.4",
     "typescript": "^5.3.3"
   },
-  "packageManager": "pnpm@10.7.0+sha512.6b865ad4b62a1d9842b61d674a393903b871d9244954f652b8842c2b553c72176b278f64c463e52d40fff8aba385c235c8c9ecf5cc7de4fd78b8bb6d49633ab6",
-  "dependencies": {
-    "D": "^1.0.0"
-  }
+  "packageManager": "pnpm@10.7.0+sha512.6b865ad4b62a1d9842b61d674a393903b871d9244954f652b8842c2b553c72176b278f64c463e52d40fff8aba385c235c8c9ecf5cc7de4fd78b8bb6d49633ab6"
 }

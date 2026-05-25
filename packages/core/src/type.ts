@@ -3,6 +3,8 @@ export interface StackRouterProviderProps {
   isShowHeader?: boolean;
   Activities?: { path: string; element: React.ReactNode }[];
   initialActivity: { path: string; element: React.ReactNode };
+  /** 개발 시 스택 로드맵 오버레이 (기본: NODE_ENV === "development") */
+  enableDevTools?: boolean;
 }
 
 export interface VisiblePage {

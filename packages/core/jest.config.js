@@ -2,12 +2,7 @@ module.exports = {
   displayName: "core",
   preset: "ts-jest",
   testEnvironment: "jsdom",
-  testMatch: [
-    "**/__tests__/**/*.ts",
-    "**/__tests__/**/*.tsx",
-    "**/?(*.)+(spec|test).ts",
-    "**/?(*.)+(spec|test).tsx",
-  ],
+  testMatch: ["<rootDir>/src/__tests__/**/*.(test|spec).(ts|tsx)"],
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",

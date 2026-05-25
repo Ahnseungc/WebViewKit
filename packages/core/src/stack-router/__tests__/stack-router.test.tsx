@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import StackRouter from "../stack-router-provider";
+import StackRouterProvider from "../stack-router-provider";
 import { history } from "../../history";
 
 // Mock components for testing
@@ -17,7 +17,7 @@ const mockActivities = [
 // Helper function to wait for animations
 const waitForAnimation = async () => {
   await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 700)); // 애니메이션 시간과 동일하게 설정
+    await new Promise((resolve) => setTimeout(resolve, 520));
   });
 };
 
@@ -29,7 +29,7 @@ describe("StackRouter", () => {
 
   it("renders initial page correctly", () => {
     render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -40,7 +40,7 @@ describe("StackRouter", () => {
 
   it("navigates to new page when push is called", async () => {
     const { rerender } = render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -53,7 +53,7 @@ describe("StackRouter", () => {
     await waitForAnimation();
 
     rerender(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -66,7 +66,7 @@ describe("StackRouter", () => {
 
   it("goes back when back is called", async () => {
     const { rerender } = render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -81,7 +81,7 @@ describe("StackRouter", () => {
     await waitForAnimation();
 
     rerender(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -94,7 +94,7 @@ describe("StackRouter", () => {
 
   it("handles multiple page transitions correctly", async () => {
     const { rerender } = render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -108,7 +108,7 @@ describe("StackRouter", () => {
     await waitForAnimation();
 
     rerender(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -126,7 +126,7 @@ describe("StackRouter", () => {
     await waitForAnimation();
 
     rerender(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -139,7 +139,7 @@ describe("StackRouter", () => {
 
   it("maintains correct page order in stack", async () => {
     const { rerender } = render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -154,7 +154,7 @@ describe("StackRouter", () => {
     await waitForAnimation();
 
     rerender(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
       />
@@ -172,7 +172,7 @@ describe("StackRouter", () => {
 
   it("handles maxWidth prop correctly", () => {
     const { container } = render(
-      <StackRouter
+      <StackRouterProvider
         initialActivity={{ path: "/page1", element: <MockPage1 /> }}
         Activities={mockActivities}
         maxWidth="800px"

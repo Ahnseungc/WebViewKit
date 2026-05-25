@@ -1,0 +1,12 @@
+node_modules/
+dist/
+!packages/core/dist/
+*.tsbuildinfo
+.DS_Store
+coverage/
+.turbo/
+*.log
+.env
+.env.*
+packages/browser/node_modules/
+packages/browser/dist/

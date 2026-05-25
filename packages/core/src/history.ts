@@ -1,94 +1,98 @@
 import { HistoryAction, HistoryListener, HistoryState } from "./type";
+import { STACK_TRANSITION_MS } from "./constants";
+
+const isBrowser = typeof window !== "undefined";
 
 const listeners = new Set<HistoryListener>();
 
-const handlePopState = (event: PopStateEvent) => {
-  const state = event.state as HistoryState;
-  notifyListeners(state);
-};
-
-// notify to listeners
 const notifyListeners = (state: HistoryState) => {
   listeners.forEach((listener) => listener(state));
 };
 
-// initialize
-window.addEventListener("popstate", handlePopState);
+if (isBrowser) {
+  window.addEventListener("popstate", (event: PopStateEvent) => {
+    const state = event.state as HistoryState;
+    notifyListeners(state);
+  });
+}
+
+const delay = () =>
+  new Promise<void>((resolve) => setTimeout(resolve, STACK_TRANSITION_MS * 0.6));
 
 export const history = {
-  // add new history entry
-  push: async (path: string, data?: any) => {
+  push: async (path: string, data?: unknown) => {
+    if (!isBrowser) return;
     const state: HistoryState = {
       path,
       data,
       action: HistoryAction.PUSH,
     };
     window.history.pushState(state, "", path);
-    // 애니메이션을 위한 지연
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await delay();
     notifyListeners(state);
   },
 
-  // replace current history entry
-  replace: async (path: string, data: any) => {
+  replace: async (path: string, data?: unknown) => {
+    if (!isBrowser) return;
     const state: HistoryState = {
       path,
       data,
       action: HistoryAction.REPLACE,
     };
     window.history.replaceState(state, "", path);
-    await new Promise((resolve) => setTimeout(resolve, 300));
+    await delay();
     notifyListeners(state);
   },
 
-  // back to previous history entry
   back: async () => {
+    if (!isBrowser) return;
     window.history.back();
 
     await new Promise<void>((resolve) => {
-      const handlePopState = () => {
-        window.removeEventListener("popstate", handlePopState);
+      const onPop = () => {
+        window.removeEventListener("popstate", onPop);
         resolve();
       };
-      window.addEventListener("popstate", handlePopState);
+      window.addEventListener("popstate", onPop);
     });
 
-    const state: HistoryState = {
+    notifyListeners({
       path: window.location.pathname,
       action: HistoryAction.POP,
-    };
-    notifyListeners(state);
+    });
   },
 
-  // forward to next history entry
   forward: async () => {
+    if (!isBrowser) return;
     window.history.forward();
-    const state: HistoryState = {
+    await delay();
+    notifyListeners({
       path: window.location.pathname,
       action: HistoryAction.PUSH,
-    };
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    notifyListeners(state);
+    });
   },
 
-  // go to specific history entry
   go: async (delta: number) => {
+    if (!isBrowser) return;
     window.history.go(delta);
-    const state: HistoryState = {
+    await delay();
+    notifyListeners({
       path: window.location.pathname,
       action: HistoryAction.PUSH,
-    };
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    notifyListeners(state);
+    });
   },
 
-  // get current history entry
-  getCurrentState: (): HistoryState =>
-    (window.history.state as HistoryState) || {
-      path: window.location.pathname,
-    },
+  getCurrentState: (): HistoryState => {
+    if (!isBrowser) {
+      return { path: "/" };
+    }
+    return (
+      (window.history.state as HistoryState) || {
+        path: window.location.pathname,
+      }
+    );
+  },
 
-  // change listener to history
   addListener: (listener: HistoryListener) => {
     listeners.add(listener);
     return () => listeners.delete(listener);
