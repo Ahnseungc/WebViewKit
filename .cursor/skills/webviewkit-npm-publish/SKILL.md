@@ -24,9 +24,17 @@ npm pack --dry-run   # dist/** 20+ files required
 
 ## Publish
 
+### CI (권장): Trusted Publisher + GitHub Actions
+
+- npm 패키지 Settings → Trusted Publisher: `Ahnseungc/WebViewKit`, workflow `publish.yml`
+- 태그 푸시: `git tag v1.2.0 && git push origin v1.2.0`
+- 또는 Actions 탭에서 **Publish to npm** → **Run workflow** (수동)
+
+### 로컬 (2FA OTP 필요)
+
 ```bash
 npm login
-npm publish --access public
+npm publish --access public --otp=앱6자리
 ```
 
 ## 실패 시
