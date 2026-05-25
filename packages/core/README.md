@@ -81,13 +81,28 @@ import { StackDevRoadmap } from "@ahnseungchan/webviewkit";
 | `BackRouter` | 뒤로가기 버튼 |
 | `StackHeader` | 경로 표시 헤더 |
 | `StackDevRoadmap` | 스택 로드맵 오버레이 |
+| `WebViewBridgeProvider` | RN/Flutter 브릿지 (protocol v1) |
+| `getStackRouterBridge` | web → native 스택 호출 |
 | `STACK_TRANSITION_MS` | 전환 ms 상수 (`500`) |
 | `Direction`, `HistoryAction` | 타입·enum |
 
-## 골디 앱 연동 참고
+## Native Bridge (1.3.0)
 
-B2C WebView에서는 앱 브릿지(`stackRouterBridge`)와 함께 쓰는 경우가 많습니다.  
-이 패키지는 **웹 단독 스택 UI**이며, RN 브릿지와는 별도 레이어입니다.
+하이브리드 앱에서 **웹 스택 UI**와 **네이티브(WebView) 스택**을 같은 프로토콜로 맞출 때 사용합니다.  
+React Native · Flutter · 브라우저 단독 모두 지원합니다.
+
+```tsx
+import { WebViewBridgeProvider, getStackRouterBridge } from "@ahnseungchan/webviewkit";
+
+// native → web: router handlers / web → native: bridge client
+<WebViewBridgeProvider stack={{ push, replace, pop, reset }} />;
+
+await getStackRouterBridge()?.push("/detail");
+```
+
+- Flutter: `stackPush` / `stackPop` 등 레거시 핸들러 또는 JSON envelope
+- React Native: `ReactNativeWebView.postMessage`
+- 프로토콜 상세: [docs/native-bridge-protocol.md](../../docs/native-bridge-protocol.md)
 
 ## License
 

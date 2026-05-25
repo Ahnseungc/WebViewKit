@@ -26,7 +26,7 @@ description: >-
 
 배포 요청 시 `.cursor/skills/webviewkit-npm-publish/SKILL.md` 절차를 core 단계에 포함한다.
 
-## 골디 연동
+## Native bridge
 
-소비처 참고: `goldie_front_main` — `hooks/navigation/useStackRouter.ts`, `features/bridge/router/`.  
+소비처는 `WebViewBridgeProvider`·`getStackRouterBridge`·`docs/native-bridge-protocol.md` 기준.  
 패키지 API 변경 시 **breaking change**를 보고에 명시한다.

@@ -26,6 +26,6 @@ alwaysApply: true
 
 - 구현: `webviewkit-core` / QA: `webviewkit-qa` / 파이프라인: `webviewkit-orchestrator`
 
-## 골디 소비처
+## 하이브리드 소비처
 
-`goldie_front_main`의 `useStackRouter`·`stackRouterBridge`와 API 호환성 유지. breaking change 시 CHANGELOG·semver.
+커스텀 `stackRouterBridge`·Flutter `stackPush` 핸들러와의 호환성 유지. breaking change 시 CHANGELOG·semver.

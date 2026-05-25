@@ -33,4 +33,4 @@ Cursor **서브에이전트**·**스킬**·**룰** 진입점입니다.
 
 - [CHANGELOG.md](./CHANGELOG.md)
 - [packages/core/README.md](./packages/core/README.md)
-- 골디 연동 참고: `docs/goldie-stack-bridge.md`
+- Native bridge: `docs/native-bridge-protocol.md`

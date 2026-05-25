@@ -2,6 +2,17 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
+## [1.3.0] - 2026-05-25
+
+### Added
+
+- **Native Bridge Protocol v1** — JSON envelope (`webviewkit` namespace)
+- **`WebViewBridgeProvider`**, **`createWebViewBridgeClient`**, **`installBridgeHost`**
+- **`createStackRouterBridge` / `getStackRouterBridge`** — Flutter `stackPush`·`stackPop` 레거시 핸들러 호환
+- **React Native** (`ReactNativeWebView.postMessage`) · **Flutter** (`flutter_inappwebview.callHandler`) transport
+- 문서: `docs/native-bridge-protocol.md`
+- npm README·패키지 설명에서 제품(앱) 특정 도메인 문구 제거
+
 ## [1.2.0] - 2026-05-25
 
 ### Added
