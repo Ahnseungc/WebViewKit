@@ -1,0 +1,31 @@
+---
+description: Goldie 프로젝트의 App Router API 라우트(app/api) 구조 및 작성 규칙
+globs: "app/api/**/*.ts"
+alwaysApply: false
+---
+
+# API Routes - Goldie Project
+
+Next.js App Router의 Route Handler(`app/api/`) 구조, 네이밍, 응답 형식, 인증 사용 규칙입니다.
+
+## 1. 라우트 구조·네이밍
+
+- **경로**: `app/api/` 하위에 폴더로 경로를 표현합니다. 각 HTTP 메서드별로 `route.ts`에서 `GET`, `POST`, `PUT`, `PATCH`, `DELETE` 등을 export합니다.
+- **네이밍**: URL은 소문자, 단어 구분은 하이픈(kebab-case). 예: `app/api/user/profile/route.ts` → `/api/user/profile`, `app/api/trade-history/route.ts` → `/api/trade-history`.
+- **동적 세그먼트**: `[id]`, `[...slug]` 등 Next.js 규칙을 따릅니다. 예: `app/api/trade/[id]/route.ts` → `/api/trade/123`.
+
+## 2. Route Handler 응답 형식
+
+- **JSON**: 데이터 응답은 `Response` 또는 `NextResponse.json()`으로 JSON을 반환합니다. 일관된 래퍼 형식(예: `{ success, data, message }`)을 사용하면 클라이언트 처리에 유리합니다.
+- **상태 코드**: 성공 200(또는 201), 클라이언트 오류 4xx, 서버 오류 5xx를 명시합니다. `NextResponse.json(body, { status })`로 설정합니다.
+- **헤더**: CORS·캐시 등이 필요하면 `headers`를 설정합니다. 인증이 필요한 라우트는 401/403을 적절히 반환합니다.
+
+## 3. 인증·세션
+
+- **NextAuth**: API 라우트에서 세션을 쓰려면 `auth()`(서버) 또는 쿠키/Authorization 헤더를 검사합니다. NextAuth가 제공하는 방식(`getServerSession` 또는 v5 `auth()`)에 맞춰 인증 여부를 판단하고, 미인증 시 401을 반환합니다.
+- **보안**: API 키·시크릿은 환경 변수로만 관리하고, 클라이언트에 노출되지 않도록 합니다. 서버 전용 로직만 Route Handler에 두고, 클라이언트 호출은 `fetch`/axios로 `/api/...`를 호출합니다.
+
+## 4. 에러 처리
+
+- **try/catch**: Route Handler 내부에서 예외가 나면 500과 에러 메시지(운영에서는 일반화된 메시지)를 반환합니다. 상세 에러는 로깅(Sentry 등)에만 남깁니다.
+- **검증**: 입력은 Zod 등으로 검증하고, 실패 시 400과 함께 필드별 오류 정보를 반환할 수 있습니다.

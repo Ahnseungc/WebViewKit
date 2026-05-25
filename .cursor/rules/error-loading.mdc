@@ -1,0 +1,35 @@
+---
+description: Goldie 프로젝트의 에러·로딩·경계(error.tsx, loading.tsx, Suspense) 사용 규칙
+globs: "app/**/*.{tsx,jsx}"
+alwaysApply: false
+---
+
+# Error & Loading Boundaries - Goldie Project
+
+App Router의 `error.tsx`, `loading.tsx`, `not-found.tsx` 및 Suspense fallback 사용 규칙입니다.
+
+## 1. error.tsx
+
+- **역할**: 해당 세그먼트(및 하위)에서 발생한 런타임 에러를 잡아 UI를 대체합니다. 반드시 Client Component(`"use client"`)로 작성합니다.
+- **위치**: 에러를 처리할 세그먼트 폴더에 `error.tsx`를 두면, 그 하위에서 발생한 에러만 해당 boundary가 처리합니다. 루트 `app/error.tsx`는 전역 폴백입니다.
+- **표시**: 사용자에게 안내 메시지와 재시도(또는 홈으로) 버튼을 제공합니다. 에러 내용은 개발 환경에서만 노출하고, 운영에서는 로깅(Sentry 등)만 합니다.
+
+## 2. loading.tsx
+
+- **역할**: 해당 세그먼트가 로딩 중일 때 자동으로 보여지는 UI입니다. Suspense boundary와 동일한 동작입니다.
+- **위치**: 로딩 UI를 넣고 싶은 세그먼트 폴더에 `loading.tsx`를 둡니다. 라우트 그룹별·페이지별로 세분화 가능합니다.
+- **일관성**: 프로젝트에서 정한 로딩 패턴(스켈레톤 vs 스피너 vs 플레이스홀더 텍스트)을 유지합니다. `components/loading/` 또는 디자인 시스템에 정의된 로딩 컴포넌트를 사용합니다.
+- **적용 예**: `app/(home)/loading.tsx`, `app/(protected)/loading.tsx`에서 `LoadingCenterScreen`을 사용합니다.
+
+## 3. not-found.tsx
+
+- **역할**: `notFound()` 호출 시 또는 매칭되지 않은 URL에 대해 404 UI를 표시합니다.
+- **위치**: `app/not-found.tsx`는 전역 404. 특정 라우트 그룹/세그먼트 하위에 두면 해당 구간 전용 404가 됩니다.
+- **내용**: 브랜드에 맞는 404 메시지와 홈/이전 페이지로 돌아가는 링크를 제공합니다.
+
+## 4. Suspense fallback
+
+- **`page.tsx` / `layout.tsx` 최상단**: 라우트 전체를 `<Suspense>`로 한 번에 감싸지 않는다. 세그먼트 단위 로딩은 **`loading.tsx`** 로 두거나, `useSearchParams`·`React.lazy` 등으로 경계가 필요한 **클라이언트 컨테이너 내부**에서만 `<Suspense>`를 쓴다.
+- **일관성**: `<Suspense fallback={...}>`의 fallback은 `loading.tsx`와 동일한 패턴(스켈레톤/스피너 등)을 사용하여 로딩 경험을 통일합니다.
+- **범위**: 데이터를 쓰는 최소 단위에 Suspense를 두어, 나머지 레이아웃은 유지하고 로딩 구간만 fallback으로 대체합니다.
+- **재사용**: 공통 fallback 컴포넌트(예: `LoadingCenterScreen`, 스켈레톤)를 `components/loading/` 등에 두고 재사용합니다.

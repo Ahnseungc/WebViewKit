@@ -1,0 +1,41 @@
+---
+description: 앱 WebView·모바일에서 하단 고정 CTA(공통 바텀 버튼) 사용 시 레이아웃 벗어남·safe area 방지
+globs: app/**/*.tsx,containers/**/*.tsx,components/floating/**/*.tsx,components/auth/**/*.tsx,features/**/*.tsx
+alwaysApply: false
+---
+
+# WebView·하단 고정 CTA (공통 바텀 버튼)
+
+골디 B2C는 **앱 내 WebView**와 **최대 폭 480px(`device-max-width`)** 가 전제다. `fixed bottom` + DS `Button` 조합만으로는 **가로 overflow**, **홈 인디케이터에 가려짐**, **스크롤 본문이 버튼 아래로 깔림**이 자주 난다.
+
+## 반드시 지킬 것
+
+1. **Safe area**  
+   하단 패딩에 `env(safe-area-inset-bottom, 0px)` 를 포함한다.  
+   예: `pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]`, `pb-[max(1rem,env(safe-area-inset-bottom,0px))]`  
+   바텀시트는 `max-h-[min(90dvh,calc(100dvh-env(safe-area-inset-bottom,0px)))]` 등 **뷰포트·키보드**를 고려한다.
+
+2. **가로 폭·중앙 정렬**  
+   `fixed` 바는 `w-full`만 쓰면 WebView에서 **캔버스보다 넓어 보이거나** 좌우가 잘릴 수 있다.  
+   **`device-max-width`** 와 팀에서 쓰는 **중앙 정렬 패턴**을 맞춘다. 재사용 시 **`components/floating/BottomFloatingContainer.tsx`** 를 우선한다 (주석에 PC 웹뷰 컬럼 정렬 설명 있음).
+
+3. **본문 하단 여백**  
+   고정 CTA 높이만큼 메인/스크롤 영역에 `pb-*` 를 두어 **마지막 콘텐츠가 버튼에 가리지 않게** 한다. (예: `pb-28`, `pb-[calc(80px+env(safe-area-inset-bottom,0px))]` 등 화면별 합의)
+
+4. **`100vh` 남용 금지**  
+   모바일 브라우저·WebView에서는 `100vh`가 주소창·safe area와 어긋날 수 있다. 필요 시 **`100dvh` / `min()`** 등으로 조정한다.
+
+## 구현 시 체크
+
+- [ ] 하단 `padding`·`bottom`에 **safe-area-inset-bottom** 반영  
+- [ ] `fixed` 영역이 **`device-max-width`** 및 **좌우 중앙**과 일치하는지  
+- [ ] 스크롤 콘텐츠에 **CTA 높이 + safe area** 만큼 `pb` 있는지  
+- [ ] 실제 **앱 WebView**에서 스크롤 끝·회전·키보드 올린 상태까지 한 번 확인 (가능하면)
+
+## 참고 구현
+
+- `components/floating/BottomFloatingContainer.tsx` — 하단 고정 래퍼 + safe area  
+- `containers/new-sell/_src/activities/SellFunnelBottomActions.tsx` — `pb-[calc(...+env(safe-area-inset-bottom))]` 예시  
+- `components/auth/LoginCheckBottomSheet.tsx` — 시트 `max-h` + safe area
+
+DS `components/ds/button/` 은 수정하지 않고, **상위 래퍼·레이아웃·padding** 으로 WebView를 흡수한다.

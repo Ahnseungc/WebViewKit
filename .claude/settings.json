@@ -1,0 +1,17 @@
+{
+  "defaultMode": "acceptEdits",
+  "permissions": {
+    "allow": [
+      "Read(**)",
+      "Edit(packages/**)",
+      "Write(packages/**)",
+      "Edit(docs/**)",
+      "Write(docs/**)",
+      "Edit(.cursor/**)",
+      "Write(.cursor/**)",
+      "Bash(pnpm *)",
+      "Bash(npm *)",
+      "Bash(git *)"
+    ]
+  }
+}

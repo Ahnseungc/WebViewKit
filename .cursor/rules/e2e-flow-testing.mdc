@@ -1,0 +1,48 @@
+---
+description: 사용자 플로우·크리티컬 경로는 Playwright E2E로 자동화하는 규칙
+globs: "e2e/**/*,playwright.config.ts,playwright.config.mts"
+alwaysApply: false
+---
+
+# E2E 플로우 테스트 (Playwright)
+
+`testing.mdc` §1과 함께 쓴다. **브라우저에서만 검증 가능한 다단계 플로우**(로그인 후 이동, 결제·주문 퍼널, 가드·리다이렉트)는 **Playwright E2E**로 고정한다.
+
+## 1. 도구·의존성
+
+- 러너: **`@playwright/test`** (공식 테스트 러너). 저장소에 아직 없다면 `pnpm add -D @playwright/test` 로 추가한다.
+- **로컬**: `pnpm run test:e2e` → `playwright test --ui`(UI 모드가 기본). 스펙 선택·실행·트레이스 확인은 UI에서 한다.
+- **CI**: `pnpm run test:e2e:ci` → 헤드리스 `playwright test`.
+- 코드젠은 보조(`playwright codegen`); 신규 플로우는 UI에서 녹화·디버그를 우선한다.
+- 루트에 **`playwright.config.ts`**(또는 `.mts`)를 두고 `testDir: 'e2e'`, `baseURL`(예: 로컬 `http://127.0.0.1:3010` — `package.json`의 `dev` 포트와 맞출 것), `webServer` 옵션으로 `pnpm dev` 기동을 선택적으로 연결한다.
+
+## 2. 파일 배치
+
+- **디렉터리**: 저장소 루트 **`e2e/`** 아래에 도메인·플로우별로 나눈다.
+  - 예: `e2e/collect-gold/gold-exchange.spec.ts`, `e2e/auth/signin-redirect.spec.ts`
+- **이름**: `*.spec.ts` 권장(E2E만 해당 패턴으로 구분해 Vitest와 충돌을 피함).
+- **공통**: `e2e/fixtures/`(storageState·로그인 세션), `e2e/helpers/`(로그인 헬퍼, URL 빌더).
+
+## 3. 작성 원칙
+
+- **한 스펙 파일 = 한 사용자 여정**(또는 밀접한 소수 시나리오). `test.describe`에 플로우 이름(한글 가능), `test` 단계는 **Given-When-Then**에 맞춰 짧게 나눈다.
+- **쿼리**: `getByRole`, `getByLabel`, `getByTestId`(최후). RTL과 동일하게 **역할·이름** 우선.
+- **안정성**: `expect`는 Playwright의 **auto-wait**에 맡기고, 고정 `waitForTimeout`은 피한다. 네트워크 의존 시 `waitForURL` / `waitForResponse` 등을 사용한다.
+- **비밀**: 계정·토큰은 `.env`·CI 시크릿에 두고, 코드·스펙에 하드코딩하지 않는다.
+
+## 4. UI 구현과의 관계
+
+- **RTL(Vitest)**: 컴포넌트 단위 표시·클릭·분기.
+- **E2E**: 라우트 연결·세션·실제 네비게이션·백엔드 스테이징과 맞는 **엔드투엔드** 검증.
+- 새 **크리티컬 플로우**를 만들거나 변경하면: RTL을 보강한 뒤, 해당 플로우에 대응하는 **`e2e/**/*.spec.ts`를 추가·수정**하는 것을 원칙으로 한다. (`.cursor/rules/ui-testing.mdc`와 병행)
+
+## 5. 스크립트·CI
+
+- `package.json`: `"test:e2e": "playwright test --ui"`(로컬), `"test:e2e:ci": "playwright test"`(CI).
+- CI에서는 `pnpm exec playwright install --with-deps` 후 `pnpm run test:e2e:ci` 를 실행한다.
+- 로컬 전용 안내: `e2e/README.md`
+
+## 6. 관련 문서
+
+- 공통 테스트: `.cursor/rules/testing.mdc`
+- 에이전트 워크플로: `.cursor/skills/e2e-flow-playwright/SKILL.md`

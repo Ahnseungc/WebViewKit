@@ -1,0 +1,38 @@
+---
+description: >-
+  에이전트가 한 작업 단위(요청한 구현·수정·문서화)를 마치면 반드시 변경 파일을 스테이징하고
+  커밋 메시지 규격에 맞춰 커밋을 남긴다. 푸시는 사용자 요청 시 또는 별도 안내.
+  커밋 분할·타입 선택은 git-incremental-commits.mdc와 함께 적용한다.
+globs: ""
+alwaysApply: true
+---
+
+# Git — 작업 단위 종료 시 **무조건 커밋**
+
+## 목적
+
+코드·설정·문서 변경이 **한 요청 단위로 완료**되면, **예외 없이 로컬 커밋을 남긴다**.  
+메시지 형식은 **`.cursor/rules/commit-convention.mdc`** 를 따른다.
+
+## 에이전트가 할 일
+
+1. **작업 완료 직전** `git status` 로 변경 범위를 확인한다.
+2. **의도한 변경만** `git add` 한다 (`.env*` 비밀·로컬 전용 파일은 사용자 확인 없이 커밋하지 않는다 — 팀 정책에 따름).
+3. **한 번의 사용자 요청**에 대해 서로 다른 의도(`feat` vs `chore` 등)가 섞였으면 **`.cursor/rules/git-incremental-commits.mdc`** 에 따라 **커밋을 나눈다**.
+4. **`git commit -m "<type>: <한글 설명>"`** 으로 남긴다.
+5. 사용자가 **푸시**를 요청하지 않았다면, 완료 메시지에 **“커밋만 생성함, 푸시는 필요 시 …”** 정도로 짧게 안내해도 된다.
+
+## 예외 (커밋 생략 가능)
+
+- **파일 변경이 전혀 없는 경우**.
+
+## 푸시
+
+- **기본은 자동 푸시하지 않는다** (브랜치·원격 정책은 사용자/팀 판단).
+- 사용자가 푸시를 요청하면 `git push` 를 수행한다.
+
+## 관련 규칙
+
+- 커밋 메시지 규격: `.cursor/rules/commit-convention.mdc`
+- 큰 작업 시 커밋 나누기: `.cursor/rules/git-incremental-commits.mdc`
+- 워크플로: `.cursor/skills/commit-after-task-complete/SKILL.md`

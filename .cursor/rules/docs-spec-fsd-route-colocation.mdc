@@ -1,0 +1,63 @@
+---
+description: >-
+  App Router 단일 기능 트리에 매핑되는 스펙은 app/.../<route>/_src/specs/ 에
+  README 진입점으로 둔다. 여러 라우트·전역 도메인은 docs/specs/<slug>/ 유지.
+globs:
+  - "app/**/_src/specs/**/*"
+  - "app/**/_src/**/*.tsx"
+  - "docs/specs/**/*"
+alwaysApply: false
+---
+
+# 스펙·구현 — 라우트 `_src/` 컬로케이션 (FSD)
+
+## 목적
+
+기능 스펙과 화면 구현을 **각 `page.tsx` 경로 근처 `_src/`** 에 두어, PR·이슈·리뷰 시 **코드와 문서를 함께** 찾기 쉽게 한다. `technical-stack.mdc`·`project-architecture.mdc` 의 **컬로케이션** 원칙과 맞춘다.
+
+## 배치 규칙
+
+### 권장: `<route>/_src/` + `<route>/_src/specs/` (라우트 전용)
+
+다음에 해당하면 화면 구현(`View`, 테스트, model/mock)과 스펙의 **진입점 `README.md`** 를 해당 라우트의 `_src/` 아래에 둔다.
+
+- 스펙이 **하나의 URL 세그먼트 트리**(`app/(group)/feature/...`)와 대응된다.
+- 주요 구현이 이미 `app/.../feature/_src/` (뷰·모델·mock·테스트)에 모여 있다.
+
+**경로 패턴:**
+
+```txt
+app/(…)/<feature-route>/
+  page.tsx
+  _src/
+    <RouteView>.tsx
+    <RouteView>.test.tsx
+    model/ | mock/       # 선택: 해당 라우트 전용일 때만
+    specs/
+      README.md          # 필수: 요약·Jira·Figma·라우트 표
+      <topic>.md         # 선택: 상세 스펙 분리
+```
+
+- 폴더명 **`specs`** (복수)로 통일한다.
+- `README.md` 에 **목적·범위/비목표·Jira·Figma·라우트 매핑** 을 넣는다. 상세 내용은 같은 폴더의 추가 `.md` 로 분리해도 된다.
+
+### 대안: `docs/specs/<feature-slug>/` (전역 인덱스)
+
+다음에는 **`docs/specs/<기능-슬러그>/`** 를 쓴다 (기존 규칙: `.cursor/rules/docs-spec-by-feature.mdc`).
+
+- **여러 라우트**에 걸친 에픽·플랫폼 공통 정책.
+- 디자인/기획만 먼저 있고 **아직 `app/` 경로가 없는** 초안.
+- 릴리즈 노트·다기능 요약처럼 **저장소 루트 `docs/`** 에서 찾는 것이 팀 관례인 경우.
+
+`_src/specs/` 로 옮긴 기능은 **`docs/specs/<slug>/README.md`** 에 **한 줄 이전 안내**만 남겨도 된다.
+
+## 에이전트·기여자
+
+- 새 작업 시 **해당 라우트의 `page.tsx` 옆 `_src/`를 우선** 갱신한다.
+- 공유 성격의 코드(`_src/model` 등)는 상위 세그먼트에 두되, 특정 라우트 전용이면 라우트 로컬 `_src/`로 이동한다.
+- `docs/specs/README.md` **등록 목록**에는 `_src/specs/` 진입점을 **리포지토리 상대 경로**(백틱)로 적는다.
+
+## 관련
+
+- 전역 기능별 폴더: `.cursor/rules/docs-spec-by-feature.mdc`
+- 스킬: `.cursor/skills/spec-docs-fsd-colocation/SKILL.md`, `.cursor/skills/spec-docs-by-feature/SKILL.md`

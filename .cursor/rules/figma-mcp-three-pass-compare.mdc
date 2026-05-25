@@ -1,0 +1,48 @@
+---
+description: >-
+  Figma MCP로 받은 노드 값을 정해진 3회 대조한 뒤에만 구현한다. plugin-figma-figma
+  get_design_context 등과 design-system 토큰을 맞춘다.
+globs: "**/*.{tsx,ts}"
+alwaysApply: false
+---
+
+# Figma MCP — 노드 값 **3회 비교** 후 구현
+
+사용자가 **Figma URL·`node-id`**(또는 동일 의미의 노드 지정)를 주고 MCP로 구현할 때, **아래 3번의 값 비교를 끝낸 뒤에만** TS/TSX를 작성한다.  
+(한 번 훑고 바로 코딩하지 않는다.)
+
+**시각 기준:** 같은 노드에 대해 **초기 `get_screenshot` 기준 캡처**를 남기고, 구현 후 **한 번 더 시각 QA**한다. (`.cursor/rules/figma-mcp-screenshot-qa.mdc`, `.cursor/skills/figma-mcp-screenshot-qa/SKILL.md`)
+
+## 제1회 비교 — MCP 원본 ↔ 디자인 토큰 표
+
+1. **`get_design_context`**(필요 시 `get_metadata`로 자식 노드 분할 조회)로 **레이아웃·타이포·색·반경·간격·그림자(box-shadow)** 를 확보한다.
+2. **`get_variable_defs`** — 노드에 Variables가 있으면 이름·값을 읽는다.
+3. **`.cursor/rules/figma-mcp-verify-tokens-icons.mdc`** §1 표에 따라, 각 값을 **`styles/typography.css` · `styles/color.css` · `styles/radius.css`** 및 spacing 규칙과 **한 줄씩 대응**시킨다. (임의 Hex·`text-[Npx]` 금지.)
+
+→ 산출: **매핑 메모**(짧게라도) — 어떤 Figma 수치가 어떤 토큰 클래스로 갈지.
+
+## 제2회 비교 — 매핑 확정 ↔ Goldie 규칙·DS
+
+1. 제1회에서 고른 클래스·컴포넌트가 **`.cursor/rules/figma-to-code-typography.mdc`**, **`.cursor/rules/design-system.mdc`**, **`.cursor/skills/figma-design-to-goldie/SKILL.md`** 와 모순되지 않는지 다시 본다.
+2. **`search_design_system`** 등으로 **라이브러리·DS 재사용**이 더 맞는지 확인한다. (`.cursor/skills/design-reuse-first/SKILL.md`)
+3. **아이콘**은 SVG 경로가 정해졌는지(추출 위치 `components/svgIcons/`) 확인한다.
+
+→ 산출: **구현 순서·사용할 ds 컴포넌트 목록** 확정. 여기까지에서 **아직 화면 JSX 대량 작성은 시작하지 않는다.**
+
+## 제3회 비교 — 구현 직전 체크리스트
+
+1. 제1·2회 매핑을 기준으로 **임의 값·금지 패턴**이 남아 있지 않은지 점검한다. (`text-p-*`, `bg-[#...]`, DS 무단 수정 등)
+2. **PC 1200px·WebView 하단 CTA** 등 프로젝트 공통 레이아웃이 필요하면 **`.cursor/rules/webview-bottom-cta.mdc`**, **`lib/layout/pcWebviewColumnLayout.ts`** 등과 맞는지 본다.
+3. **`.cursor/rules/figma-mcp-verify-tokens-icons.mdc`** §4 체크리스트에 **체크 가능한 항목만** 한 번 더 읽는다.
+
+→ 이 시점에서 **코드 작성(구현) 시작**.
+
+## MCP 실패 시
+
+- 호출 한도·오류로 노드를 읽지 못하면 **3회 비교를 완료할 수 없음**을 사용자에게 알리고, **스크린샷·Dev 모드 수치·스펙 문서** 중 무엇으로 대체할지 합의한 뒤 진행한다. (무리하게 추측 구현하지 않는다.)
+
+## 관련
+
+- 토큰·아이콘 상세: `.cursor/rules/figma-mcp-verify-tokens-icons.mdc`
+- 스크린샷·시각 QA: `.cursor/rules/figma-mcp-screenshot-qa.mdc`
+- 스킬 실행 순서: `.cursor/skills/figma-mcp-implementation-verify/SKILL.md`

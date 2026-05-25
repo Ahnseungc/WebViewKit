@@ -1,0 +1,25 @@
+---
+description: >-
+  React/TSX 파일당 export 컴포넌트 하나 원칙. 한 파일에 여러 화면 컴포넌트를 두지 않는다.
+globs: "**/*.{tsx,jsx}"
+alwaysApply: false
+---
+
+# 한 파일 — 한 컴포넌트 (export 기준)
+
+## 원칙
+
+- **default export**로보내는 React 컴포넌트는 **파일당 1개**로 둔다. (Next.js `page.tsx` / `layout.tsx` / `loading.tsx` 등 라우트 파일도 동일.)
+- **named export**로 **서로 다른** 화면·위젯 컴포넌트를 한 `.tsx` 파일에 여러 개 두지 않는다. 조각이 늘면 **파일을 나눈다**.
+
+## 허용 예외
+
+- **`index.ts` / `index.tsx` 배럴**: re-export만 모아 두는 파일.
+- **타입·상수·유틸만** 있는 `.ts` 파일 (컴포넌트 없음).
+- **Storybook** `*.stories.tsx` 등 팀이 별도로 정한 스토리 전용 파일.
+- **같은 파일 내부 전용** 서브 컴포넌트: **export 하지 않고** 바로 위의 메인 컴포넌트에서만 쓰는 짧은 조각은 허용하되, **다른 파일에서 import**하게 되면 **별도 파일로 분리**한다.
+
+## 권장 패턴
+
+- 화면이 커지면 **구역별 파일**로 쪼갠 뒤, 상위에서 조합한다 (`FeatureSection.tsx`, `FeatureToolbar.tsx` 등 각각 한 export).
+- 상세: `.cursor/rules/logic-ui-separation.mdc`, `component-max-lines.mdc`, `project-architecture.mdc`.

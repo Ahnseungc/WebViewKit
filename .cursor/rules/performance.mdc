@@ -1,0 +1,51 @@
+---
+description: Goldie 프로젝트의 성능(이미지, 번들, 코드 스플리팅) 관련 규칙
+globs: "**/*.{ts,tsx,js,jsx}"
+alwaysApply: false
+---
+
+# Performance - Goldie Project
+
+이미지 최적화, 동적 import·코드 스플리팅, 번들·third-party 스크립트 관리 원칙입니다.
+
+## 1. 이미지
+
+- **next/image 사용**: 정적·동적 이미지는 가능한 한 `next/image`를 사용합니다. 자동 최적화·레이지 로딩·레이아웃 시프트 방지를 위해 `<img>` 대신 `Image`를 우선합니다.
+- **sizes**: 반응형 이미지는 `sizes`를 지정하여 적절한 크기만 로드되도록 합니다. (예: `(max-width: 480px) 100vw, 400px`.)
+- **priority**: LCP에 영향을 주는 히어로 이미지 등은 `priority`를 사용합니다. 개수는 최소로 제한합니다.
+- **디자인 시스템**: design-system.mdc의 에셋·이미지 규칙과 동일하게 적용합니다.
+
+## 2. 동적 import·코드 스플리팅
+
+- **무거운 컴포넌트**: 모달·바텀시트·드로어·차트 등 초기 로딩에 필수가 아닌 UI는 `next/dynamic` 또는 `React.lazy` + `Suspense`로 분리합니다. `loading` fallback을 지정합니다.
+- **페이지 단위**: 라우트별 청크는 App Router가 기본으로 나누므로, 페이지 내 “조건부로만 쓰는 큰 블록”에 동적 import를 적용합니다.
+- **third-party**: 무거운 라이브러리는 동적 import로 필요한 화면에서만 로드합니다. (예: 차트, 에디터, 지도.)
+
+## 3. Render-blocking CSS
+
+- **루트 레이아웃 최소화**: `app/layout.tsx`에서는 전역으로 꼭 필요한 CSS(globals.css, Tailwind, 디자인 토큰)만 import합니다. 페이지/컴포넌트 전용 CSS는 사용하는 쪽에서 import하여 코드 스플리팅되게 합니다.
+- **라이브러리 CSS**: Swiper, 차트, 에디터 등 특정 화면에서만 쓰는 라이브러리의 CSS는 **해당 컴포넌트 또는 해당 라우트 레이아웃**에서 import합니다. 루트 레이아웃에 두지 않아 초기 HTML의 critical path와 체인 길이를 줄입니다. (Lighthouse: “Render blocking requests” / “Network dependency tree” 개선.)
+
+## 4. 번들·스크립트
+
+- **트리 쉐이킹**: 사용하지 않는 export는 import하지 않습니다. barrel(`index.ts`)에서 한꺼번에 re-export할 때 불필요한 의존성이 들어가지 않도록 합니다.
+- **Third-party 스크립트**: 외부 스크립트(분석, 광고, 채팅 위젯 등)는 `next/script`로 로드하고, `strategy`(afterInteractive, lazyOnload 등)를 지정해 LCP·FID에 영향을 줄이도록 합니다.
+- **측정**: 필요 시 Lighthouse·Core Web Vitals로 LCP, FID, CLS를 점검하고, 이미지·폰트·스크립트 로딩을 조정합니다.
+
+## 5. Lighthouse에서 수정 불가/인지 항목
+
+- **Deprecated APIs**: Facebook Pixel(fbevents.js)의 AttributionReporting 등은 서드 파티 코드에서 사용합니다. 우리 코드에서 제거할 수 없으며, 업스트림 업데이트를 기다리거나 픽셀 전략을 재검토할 때 고려합니다.
+- **Third-party cookies**: Google Analytics, Clarity 등이 설정하는 쿠키는 해당 서비스 동작에 필요합니다. 브라우저의 3rd party 쿠키 제한 대비는 각 서비스 가이드(GA4, Clarity)와 쿠키 동의/대체 수단 검토로 대응합니다.
+
+## 6. cursor/rules 기반 리팩토링 권장 사항
+
+- **적용 완료 예시**: console.log 제거/개발 전용 처리, Hex → 디자인 토큰(일부 파일), 중첩 삼항 → SwitchCaseFunction, 아이콘 버튼 aria-label 추가.
+- **추가 권장**: Hex/임의 색상은 `app/**/_src/`, `features/`, `components/` 등에 남아 있을 수 있으므로 도메인별로 `styles/color.css` 시맨틱 토큰으로 교체 권장.
+- **아키텍처**: state-data-management.mdc에 따라 클라이언트·페이지 조립 컴포넌트는 `services/`를 직접 호출하지 않고 `hooks/`를 경유하는 것이 원칙입니다. 일부 화면이 아직 서비스를 직접 import하므로, 점진적으로 해당 API를 훅으로 래핑해 사용하는 전환을 권장합니다.
+
+## 7. Lighthouse 13.0.1 결과 요약 (dev-internal-front 기준)
+
+- **카테고리 점수**: Performance 65%, Accessibility 96%, Best Practices 58%, SEO 100%.
+- **수정 완료**: Accessibility 색 대비 — 홈 금 시세 카드 상승/하락 텍스트(`+5,700원(0.53%)`)가 흰 배경에서 3.78:1로 미달. `--color-text-red`를 atomic-red-500 → atomic-red-600으로 변경하여 4.5:1 이상 확보.
+- **Performance 개선 포인트**: LCP 20.1s, Speed Index 8.6s, TTI 28.7s, JS 실행 시간 1.4s 등이 주요 이슈. 이미지·폰트·초기 JS 축소, 동적 import 확대, LCP 요소 priority 적용 등으로 점진 개선 권장.
+- **Best Practices**: deprecations(Facebook AttributionReporting), third-party-cookies는 §5와 동일하게 서드 파티 이슈로 인지 후 정책 검토로 대응.

@@ -1,0 +1,33 @@
+---
+description: >-
+  GitHub PR 본문(설명) 작성 시 마크다운 실제 줄바꿈·Jira 링크·불릿 구조를 통일한다.
+  gh pr create --body 나 웹 UI 입력 시 리터럴 \n 문자열을 넣지 않는다.
+globs: ""
+alwaysApply: false
+---
+
+# GitHub PR 설명 (본문) 작성
+
+## 목적
+
+리뷰어·기획·운영이 PR만 보고도 맥락을 잡을 수 있게, **저장소 PR 템플릿** (`.github/pull_request_template.md`)과 같은 섹션 순서를 따른다.
+
+## 필수 규칙
+
+1. **실제 줄바꿈**으로 마크다운을 쓴다. 본문에 `\n` 같은 **이스케이프 시퀀스 문자열**을 넣지 않는다. (`gh pr create --body-file` 권장)
+2. **Jira**가 있으면 `- [GD-번호](https://goldie-team.atlassian.net/browse/GD-번호)` 형태의 **클릭 가능한 링크** 한 줄 이상.
+3. **변경 사항**은 `- ` 불릿, 파일·워크플로·환경 변수명은 `` `백틱` ``.
+4. **새 시크릿·환경 변수**가 필요하면 「팀 설정」 절에 저장소 경로(Settings → Environments → 환경 이름)와 **시크릿 이름 정확히** 기재.
+
+## 권장 섹션 순서
+
+1. 요약 (필수)  
+2. Jira (해당 시)  
+3. 변경 사항 (필수)  
+4. 팀 설정 / 시크릿 (CI·배포 PR 해당 시)  
+5. 스크린샷 (UI 변경 시)
+
+## 관련 파일
+
+- PR 기본 템플릿: `.github/pull_request_template.md`
+- 에이전트 워크플로: `.cursor/skills/github-pr-description/SKILL.md`

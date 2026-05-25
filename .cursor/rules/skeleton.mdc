@@ -1,0 +1,35 @@
+---
+description: 로딩 스켈레톤 UI — 단순 구현·공통 Skeleton·디자인 토큰
+globs: "**/*Skeleton*.tsx,**/loading.tsx,**/components/loading/**"
+alwaysApply: false
+---
+
+# Skeleton (Loading Placeholder)
+
+Goldie 프로젝트에서 스켈레톤은 **최소한의 회색 블록**으로 “로딩 중”만 전달한다. 실제 화면과 픽셀 단위로 맞출 필요 없다.
+
+## 1. 공통 컴포넌트
+
+- 기본은 **`@/components/loading/Skeleton`** 을 사용한다 (`bg-fill-grayscale-gray100`, `animate-pulse`).
+- 임의 Hex·`bg-[#…]` 로 스켈레톤 색을 만들지 않는다. 필요 시 `Skeleton`에 `className`으로 토큰만 조합한다.
+
+## 2. 단순함 원칙
+
+- **막대·사각형 위주**: 제목/본문/탭을 “비슷하게” 재현하려고 DOM을 복제하지 않는다.
+- **행 수**: 보통 **4~8줄** 정도면 충분하다. 과한 `rows` 기본값을 두지 않는다.
+- **탭·카드·폼**: 한 줄 `Skeleton` 또는 2줄(제목+부제) 정도로 끝낸다. 탭마다 언더라인·배지 자리까지 나누지 않는다.
+- 라우트 **`loading.tsx`** 도 동일하게: 헤더는 유지하되 본문은 짧은 스켈레톤 블록만 두는 것을 권장한다.
+
+## 3. 접근성
+
+- 로딩 영역 래퍼에 `aria-busy="true"` 와 구체적인 **`aria-label`** (예: “OO 목록 불러오는 중”)을 둔다.
+- 장식용 스켈레톤 조각에는 `aria-hidden` 을 쓸 수 있다. 스크린 리더에 중복 안내가 가지 않도록 한다.
+
+## 4. 파일·이름
+
+- 파일명은 `*Skeleton.tsx` 또는 라우트 `loading.tsx` 로 일관되게 둔다.
+- 페이지별 스켈레톤이 커지면 **공통 `Skeleton` 조합만** 늘리고, 하위 컴포넌트로 쪼개지 않는다 (불필요한 추상화 금지).
+
+## 5. 애니메이션
+
+- 기본 `animate-pulse` 를 따른다. 셰이머·그라데이션 등은 디자인 요청이 있을 때만 추가한다.

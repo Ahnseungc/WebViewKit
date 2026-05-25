@@ -1,0 +1,47 @@
+---
+description: UI(화면·뷰·위젯) 구현 시 Vitest + Testing Library 테스트를 동반 작성하는 규칙
+globs: "app/**/*.tsx,widgets/**/*.tsx,features/**/*.tsx,containers/**/*.tsx"
+alwaysApply: false
+---
+
+# UI 구현과 UI 테스트 (Vitest + RTL)
+
+`testing.mdc`의 러너·배치·Mock 규칙을 따르며, **사용자에게 보이는 UI를 새로 만들거나 의미 있게 바꿀 때** 아래를 추가로 적용한다.
+
+## 1. 적용 범위
+
+| 포함 | 제외 (테스트 생략 가능) |
+|------|-------------------------|
+| 새 라우트·`*View`·섹션 컴포넌트의 노출 문구·역할·인터랙션 | `className`만 변경, 토큰 클래스 치환 등 표시 동일 |
+| 버튼·링크·탭·펼침 등 사용자 이벤트 후 상태 변화 | 타입·import 순서만 수정 |
+| 조건부 렌더(뱃지·빈 상태·에러 문구) | Server Component만 있고 로직이 `page` 한 줄인 경우(하위 View에 테스트 집중) |
+
+## 2. 산출물
+
+- **파일**: 구현 파일과 **같은 디렉터리**에 `*.test.tsx`(또는 `__test__/*.test.tsx`)를 둔다. (`testing.mdc` §2)
+- **도구**: `@testing-library/react`, `vitest`. `@vitest-environment jsdom` 주석을 DOM이 필요한 파일 상단에 둔다.
+- **쿼리**: `getByRole`, `getByLabelText` 우선. 프로젝트에 `@testing-library/jest-dom`이 없으면 `toBeTruthy()` / `toBeNull()` 등으로 기대한다.
+
+## 3. 최소 검증 예시
+
+한 화면(뷰)당 아래 중 **해당하는 것**은 테스트로 고정한다.
+
+1. **헤딩·핵심 카피**: `getByRole('heading', { name: … })`, `getByText` 등으로 스펙 문구 노출.
+2. **CTA·네비게이션**: `getByRole('button', { name: … })`, `getByRole('link', …)` 클릭 후 `vi.fn` 모의 핸들러 호출 또는 URL/상태 변화.
+3. **분기 UI**: Mock 데이터로 `queryByText` / `toBeNull()`로 비노출 검증.
+
+## 4. Mock
+
+- `next/image`, `next/navigation`(`useRouter` 등)은 구현과 동일하게 `vi.mock`으로 맞춘다. (`testing.mdc` §3)
+- `components/ds/`는 **수정하지 않고** 그대로 import해 사용한다. (`design-system.mdc`)
+
+## 5. TDD·커밋
+
+- **Red → Green**: 새 UI 동작이면 실패하는 `it`을 먼저 추가한 뒤 구현한다. (`goldie-front` 스킬)
+- 테스트만 추가·수정 시 커밋 타입 `test:`.
+
+## 6. 관련 문서
+
+- 공통 테스트 규칙: `.cursor/rules/testing.mdc`
+- 브라우저 플로우(E2E): `.cursor/rules/e2e-flow-testing.mdc`
+- 에이전트 워크플로: `.cursor/skills/ui-with-rtl-tests/SKILL.md`, `.cursor/skills/e2e-flow-playwright/SKILL.md`

@@ -1,0 +1,33 @@
+---
+description: >-
+  클라이언트 UI와 비즈니스 로직(상태·fetch·가공) 분리. View/Container·커스텀 훅 배치 가이드.
+globs: "**/*.{tsx,ts,jsx,js}"
+alwaysApply: false
+---
+
+# 로직과 UI 분리
+
+## 목표
+
+- **UI(프레젠테이션)**: props와 디자인 시스템·토큰 기반으로 **렌더링·레이아웃**에 집중한다. 가능하면 **데이터 출처·가공식**을 모른다.
+- **로직**: 서버 상태 조회·뮤테이션, 폼 검증, 이벤트에서의 가공·분기, `useState`/`useReducer`/구독 등은 **훅·컨테이너·서버 컴포넌트** 쪽에 둔다.
+
+## 배치 규칙 (Goldie)
+
+| 역할 | 위치 예시 |
+|------|-----------|
+| 데이터 패칭·전역/복잡 클라이언트 상태 | `hooks/<도메인>/`, TanStack Query 훅 |
+| 페이지 단 조합·라우팅·훅 호출 | `app/.../_src/*Container.tsx` 또는 `containers/<도메인>/` (기존 패턴) |
+| props만 받는 표시 전용 | `.../*View.tsx`, `.../_components/*.tsx` (얇게 유지) |
+| 순수 가공·분기(React 비의존) | 같은 기능 폴더의 `model/`, `utils/`, `*.ts` |
+
+- **Server Component**인 `page.tsx`에서는 가능하면 **fetch·프리패치**만 두고, 인터랙션이 필요한 블록만 **작은 Client 컴포넌트**로 분리한다 (`project-architecture.mdc`).
+
+## 안티패턴
+
+- 한 컴포넌트 안에 **수백 줄의 JSX**와 **fetch + 다수의 `useEffect` + 복잡한 핸들러**를 함께 쌓아 두지 않는다 → **훅 추출** 또는 **View 분리**.
+- View 파일에서 **`services/` 직접 호출** 지양 → `hooks/` 래핑 또는 상위 Container에서 주입 (`state-data-management.mdc`).
+
+## 파일 나누기와의 관계
+
+- 로직을 훅으로 빼면 UI 파일은 **한 컴포넌트 export**를 유지하기 쉽다. **한 파일 한 컴포넌트** 규칙: `component-one-per-file.mdc`.

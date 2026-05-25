@@ -1,0 +1,62 @@
+---
+description: Goldie 프로젝트의 테스트(Vitest/Playwright) 작성 및 구조 규칙
+globs: "**/*.test.{ts,tsx},**/*.spec.{ts,tsx},**/__test__/**"
+alwaysApply: true
+---
+
+# Testing - Goldie Project
+
+Vitest(단위·통합) 및 Playwright(E2E) 사용 방식과 테스트 파일 배치 규칙입니다.
+
+## 0. 스펙 기반 API 구현 필수 규칙
+
+- 스펙 문서(`app/.../_src/specs/*.md`, `docs/specs/**/*.md`)를 기준으로 API를 구현/수정할 때는 **테스트 코드를 반드시 동반**합니다.
+- 구현 완료 기준은 "코드 반영 + 테스트 추가/갱신"이며, 테스트가 없으면 완료로 간주하지 않습니다.
+- 최소 기준:
+  - `services/` 변경 시: 요청/응답 파싱(Zod), 정상 응답, 예외 응답 테스트
+  - `hooks/` 변경 시: query/mutation 성공·실패 흐름 테스트(필요 시 모킹)
+  - `POST`/`PUT`/`PATCH`/`DELETE` API 구현 시: 서비스 테스트 + `useMutation` 훅 테스트를 최소 1개 이상 포함하고, 호출 컴포넌트 테스트에서 `mutateAsync` 호출 경로를 검증
+  - `page.tsx` prefetch 조합 변경 시: 조합 로직(매퍼/서버 함수) 테스트 또는 회귀 테스트
+
+## 1. 테스트 러너
+
+- **단위·통합**: **Vitest**. `pnpm test` / `pnpm test:watch` / `pnpm test:coverage`.
+- **E2E**: **Playwright** (`@playwright/test`). 브라우저 기반 **플로우·시나리오**는 루트 **`e2e/**/*.spec.ts`** 에 두고, 설정은 **`playwright.config.ts`**. 세부는 `.cursor/rules/e2e-flow-testing.mdc` 를 따른다.
+- **Storybook**: 컴포넌트 시각화·문서화. 테스트 애드온 사용 시 Vitest와 연동 가능합니다.
+
+## 2. 파일 위치·이름
+
+- **규칙**: 테스트 파일은 **대상 소스와 같은 디렉터리** 또는 **`__test__` 하위**에 둡니다.
+- **이름**: `*.test.ts` / `*.test.tsx` 또는 `*.spec.ts` / `*.spec.tsx`. 프로젝트에서 **`.test.`** 사용을 권장합니다.
+- **예시**:
+  - `utils/formatPhoneNumber.ts` → `utils/formatPhoneNumber.test.ts`
+  - `hooks/useX.ts` → `hooks/useX.test.ts` 또는 `hooks/__test__/useX.test.ts`
+  - `app/(protected)/example/_src/ExampleSection.tsx` → 동일 폴더 `ExampleSection.test.tsx` 또는 `__test__/ExampleSection.test.tsx`
+
+## 3. Mock·픽스처
+
+- **위치**: 테스트 파일과 같은 도메인 폴더의 `__test__/fixtures/` 또는 `__mocks__/`. 공통 픽스처는 `test/fixtures/` 또는 `__test__/fixtures/` 루트에 둘 수 있습니다.
+- **API 모킹**: `vi.mock("모듈 경로")` 사용. Axios/ fetch는 `vi.mock`으로 인스턴스·함수를 대체하고, `vi.mocked()`로 타입 보정.
+- **NextAuth·Router**: `next-auth` / `next/navigation` 등은 테스트 setup 또는 개별 파일에서 `vi.mock`으로 모킹합니다.
+
+## 4. 컴포넌트 테스트
+
+- **UI 구현 동반**: 새 화면·뷰·위젯을 만들거나 사용자에게 보이는 동작을 바꿀 때는 **동일 경로에 RTL 테스트를 추가·갱신**하는 것을 원칙으로 한다. 세부는 `.cursor/rules/ui-testing.mdc` 를 따른다.
+- **UI 컴포넌트**: `@testing-library/react`로 렌더·쿼리·사용자 이벤트. `components/ds/`는 디자인 시스템이므로 **가급적 수정하지 않고**, 테스트에서 그대로 사용합니다.
+- **의존성**: 테스트 대상 컴포넌트가 ds·훅·서비스를 쓰면 mock으로 격리하고, ds는 실제 import하여 스냅샷 또는 시맨틱 쿼리로 검증합니다.
+- **접근성**: 가능하면 `getByRole`, `getByLabelText` 등으로 쿼리하여 접근성와 테스트를 함께 고려합니다.
+
+## 5. 작성 스타일
+
+- **describe / it**: 한글 설명 가능. `describe("모듈/컴포넌트명", () => { ... })`, `it("기대 동작을 한 줄로", () => { ... })`.
+- **한 테스트 한 가지**: 하나의 `it`은 하나의 기대 사항만 검증합니다.
+- **setup**: 공통 설정은 `vitest.config.ts`의 `setupFiles` 또는 `beforeEach`에서 처리합니다.
+
+## 6. E2E와 Vitest 구분
+
+| 구분 | 도구 | 파일 |
+|------|------|------|
+| 컴포넌트·뷰 단위 | Vitest + RTL | `*.test.tsx` (구현 옆) |
+| 브라우저 플로우 | Playwright | `e2e/**/*.spec.ts` |
+
+- 에이전트 워크플로: `.cursor/skills/e2e-flow-playwright/SKILL.md`

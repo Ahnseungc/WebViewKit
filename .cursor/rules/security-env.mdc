@@ -1,0 +1,26 @@
+---
+description: Goldie 프로젝트의 보안 및 환경 변수 사용 규칙
+globs: "**/*.{ts,tsx,js,jsx},.env*,next.config.*"
+alwaysApply: false
+---
+
+# Security & Environment - Goldie Project
+
+환경 변수 노출 범위, API 키·시크릿 관리, 사용자 입력 검증·XSS 대응 원칙입니다.
+
+## 1. 환경 변수 사용 기준
+
+- **NEXT_PUBLIC_***: 브라우저에 노출되어도 되는 값만 사용합니다. 예: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_APP_ENV`. API 키·비밀번호·토큰 시크릿은 절대 `NEXT_PUBLIC_`로 두지 않습니다.
+- **서버 전용**: NextAuth 시크릿, DB URL, 외부 API 시크릿, 결제·인증용 키 등은 `NEXT_PUBLIC_` 없이 정의하고, Server Component·Route Handler·서버 유틸에서만 `process.env.XXX`로 참조합니다.
+- **문서화**: `.env.example`에 필요한 변수 이름과 설명(값 제외)을 정리해 두고, 실제 값은 `.env`(또는 배포 환경)에만 둡니다. `.env`는 버전 관리에 포함하지 않습니다.
+
+## 2. API 키·시크릿 노출 금지
+
+- **클라이언트**: 클라이언트 번들·HTML·초기 state에 API 키·시크릿을 넣지 않습니다. 브라우저에서 호출이 필요한 외부 API는 백엔드(Next.js API Route 또는 BFF)를 경유해 호출하고, 키는 서버에서만 사용합니다.
+- **클라이언트 주입**: 서버에서 “공개 가능한 설정”만 선택적으로 클라이언트에 넘깁니다. 예: `NEXT_PUBLIC_*` 또는 서버에서 렌더 시 주입하는 public config 객체.
+
+## 3. 사용자 입력·XSS
+
+- **검증**: 사용자 입력(폼, 쿼리, body)은 서버에서 반드시 검증합니다. Zod 등 스키마로 타입·형식·길이를 제한하고, 허용 목록(화이트리스트) 방식을 권장합니다.
+- **출력 이스케이프**: React는 기본적으로 텍스트를 이스케이프합니다. `dangerouslySetInnerHTML`은 신뢰할 수 있는 소스에만 제한하고, 가능하면 사용하지 않거나 sanitize 라이브러리와 함께 사용합니다.
+- **URL·리다이렉트**: 리다이렉트 URL 등에 사용자 입력을 넣을 때는 open redirect를 방지하도록 도메인·경로를 화이트리스트 검사합니다.

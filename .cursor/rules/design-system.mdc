@@ -1,0 +1,100 @@
+---
+description: Goldie 프로젝트의 스타일 시스템(Tailwind CSS v4) 및 디자인 토큰 사용 규칙
+globs: "**/*.{tsx,ts,css,scss}"
+alwaysApply: true
+---
+
+# Goldie Project Styling Rules
+
+이 프로젝트는 **Tailwind CSS v4**와 CSS 변수를 결합한 커스텀 디자인 시스템을 사용합니다. 모든 스타일 작업 시 아래 규칙을 준수해야 합니다.
+
+## 1. 컬러 시스템 (Design Tokens)
+
+모든 색상은 `styles/color.css`의 `@theme inline`에 등록된 시맨틱 토큰을 사용해야 합니다. **임의의 Hex 코드를 사용하지 마세요.**
+
+### Semantic Groups (styles/color.css)
+
+- **fill-primary**: 브랜드 메인 색상 (예: `fill-primary-default`, `fill-primary-dark`)
+- **fill-grayscale**: 회색 계열 (예: `fill-grayscale-gray100`, `fill-grayscale-black`)
+- **fill-status**: 상태 표시 (예: `fill-status-red`, `fill-status-blue`)
+- **bg**: 배경색 (예: `bg-default`, `bg-secondary`)
+- **text**: 텍스트색 (예: `text-default`, `text-secondary`, `text-primary`)
+- **line**: 구분선 및 테두리 (예: `line-default`, `line-secondary`)
+
+### 사용 예시
+
+- **배경**: `bg-bg-default`, `bg-fill-primary-bright`
+- **텍스트**: `text-text-default`, `text-text-primary`
+- **테두리**: `border-line-default`
+
+## 2. 타이포그래피 (Typography)
+
+`styles/typography.css`에 **Tailwind v4 `@utility`**로 정의된 프리셋 클래스를 사용합니다. 이 방식은 `lib/utils.ts`의 `cn()` 유틸리티와 완벽하게 호환되어 클래스 병합 시 우선순위를 올바르게 처리합니다.
+
+### Hierarchy & Variants
+
+- **Hierarchy**: `d1, d2` (Display), `t1, t2` (Title), `h1, h2, h3` (Heading), `b1, b2, b3` (Body), `c1` (Caption)
+- **Variants**: `bold`, `semibold`, `medium`, `regular`
+
+### 사용 예시
+
+- `<h1 className={cn("text-t2-bold", "text-text-primary")}>...</h1>`
+- `<p className="text-b2-regular text-text-secondary">...</p>`
+
+## 3. 보더 라디우스 (Border Radius)
+
+`styles/radius.css`에 `@utility`로 정의된 커스텀 라디우스 클래스를 사용합니다. 숫자 단위는 `px` 값을 기반으로 합니다.
+
+### Variants
+
+- **Full**: `rounded-0`, `rounded-20`, `rounded-40`, `rounded-80`, `rounded-100`, `rounded-120`, `rounded-160`, `rounded-200`, `rounded-999`
+- **Directional**: `rounded-t-*`, `rounded-b-*`, `rounded-l-*`, `rounded-r-*`
+- **Specific**: `rounded-tl-*`, `rounded-tr-*`, `rounded-bl-*`, `rounded-br-*`
+
+### 사용 예시
+
+- `<div className="rounded-80 bg-bg-secondary">...</div>`
+- `<button className={cn("rounded-200", "rounded-b-0")}>...</button>`
+
+## 4. 간격 및 레이아웃 (Spacing & Layout)
+
+- **Spacing**: 기본 단위는 `4px`입니다. (`--spacing: 4px`)
+  - `p-1` = 4px, `m-4` = 16px, `gap-2` = 8px
+- **Layout Principle**: 요소 간의 간격 조정 시 가급적 **`gap-n` 대신 하단 패딩(`pb-n`)**을 사용하는 것을 지향합니다. 이는 수직 레이아웃의 흐름을 더 명확하게 제어하기 위함입니다.
+- **Device Width**: 모바일 웹 뷰 최적화를 위해 최대 폭이 `480px`로 제한되어 있습니다.
+  - 중앙 정렬 레이아웃 시 `device-max-width` 유틸리티 클래스를 사용하세요.
+- **Shadows**: 전용 그림자 유틸리티를 사용합니다.
+  - `shadow-all`, `shadow-top`, `shadow-bottom`, `shadow-y`, `shadow-b`
+
+## 5. 컴포넌트 구현 원칙
+
+- **Design System 컴포넌트 우선 사용**: 모든 UI 구현 시 `components/ds/` 폴더 내의 컴포넌트를 최우선적으로 사용해야 합니다.
+  - **버튼 및 팝업**: `components/ds/button/` 및 `components/ds/popup/`에 정의된 컴포넌트만 사용해야 하며, 직접적인 스타일링을 통한 커스텀 구현을 지양합니다.
+- **Design System 컴포넌트 보호**: `components/ds/` 폴더 내의 컴포넌트는 프로젝트의 핵심 디자인 시스템이므로 사용자의 직접적인 요청이 없이는 **절대로 수정하지 마세요.** 수정이 필요한 경우 상위 컴포넌트에서 스타일을 주입하거나 래핑하여 사용합니다.
+- **임의 값 지양**: `text-[15px]`나 `bg-[#F0F0F0]`와 같은 임의 값 사용을 피하세요. 정의된 변수가 없다면 시스템 내에서 가장 유사한 값을 선택합니다.
+- **반응형**: 기본적으로 **모바일 우선(Mobile-first)**으로 작성하며, 필요한 경우에만 `sm:`, `md:` 접두사를 사용합니다.
+- **복합 클래스**: 클래스가 길어질 경우 `lib/utils.ts`의 `cn()` 유틸리티를 사용하여 가독성을 높이세요.
+
+## 6. 에셋 및 이미지 최적화 (Assets & Image Optimization)
+
+모바일 최적화 웹 환경을 위해 이미지와 아이콘 처리는 다음 규칙을 준수합니다.
+
+### 이미지 처리 (Next.js Image)
+
+- **`next/image` 사용 필수**: 모든 정적/동적 이미지는 Next.js의 `Image` 컴포넌트 사용을 원칙으로 합니다. 이는 자동 최적화, 레이지 로딩 및 레이아웃 시프트 방지를 위함입니다.
+- **임의의 `<img>` 태그 지양**: 특별한 이유가 없는 한 표준 HTML `<img>` 태그 대신 `Image` 컴포넌트를 사용하세요.
+
+### 아이콘 관리 (SVG Icons)
+
+- **컴포넌트화**: SVG 아이콘은 `<img>` 태그가 아닌 **React 컴포넌트**로 구현하여 스타일링(색상, 크기 등)이 가능하도록 합니다.
+- **폴더 구조 준수**: 아이콘은 `@components/svgIcons/` 내 도메인별 폴더에 위치시켜 관리합니다.
+  - `navigation/`: 내비게이션 관련 아이콘
+  - `collect-gold/`: 예상 견적/수거 관련 아이콘
+  - `ds/`: 디자인 시스템 범용 아이콘
+  - 그 외 적절한 도메인 폴더가 없다면 디자인 시스템 범용 아이콘 폴더(`ds/`)에 배치합니다.
+- **아이콘 추가**: 새로운 SVG가 필요한 경우, 해당 SVG 코드를 React 컴포넌트 형태로 변환하여 위 경로의 적절한 위치에 새 파일을 생성하여 사용합니다.
+
+### 사용 예시
+
+- `<BackIcon className="text-text-primary" />` (컴포넌트형 아이콘 사용)
+- `<Image src="/images/banner.png" alt="이벤트" width={400} height={200} />` (Next.js Image 사용)

@@ -1,0 +1,47 @@
+---
+description: >-
+  디자인 구현 시 components/ds 및 기존 공통 UI를 먼저 찾아 쓰고, 없을 때만 새 컴포넌트를
+  작성한다. DS 수정 금지·래핑 우선은 design-system.mdc와 동일.
+globs: "**/*.{tsx,ts}"
+alwaysApply: false
+---
+
+# 디자인 구현 — 공통 컴포넌트 우선·부족 시에만 신규 구현
+
+## 목적
+
+피그마·기획 화면을 코드로 옮길 때 **이미 있는 컴포넌트를 재사용**해 일관성·유지보수 비용을 줄인다. **동일 UI를 새로 짜는 것**은 후순위다.
+
+## 탐색 순서 (에이전트)
+
+구현 전·중에 아래 순으로 **검색·확인**한다.
+
+1. **`components/ds/`** — 버튼, 팝업, 입력, 헤더 등 디자인 시스템 (최우선).  
+   - **수정 금지**: 필요 시 **래핑 컴포넌트**나 **props·슬롯**으로만 조합한다. (`.cursor/rules/design-system.mdc`)
+2. **`components/`** (`ds` 제외) — 도메인 공통·레이아웃·범용 UI.
+3. **`app/**/_components/`**, **`app/**/_src/`** — 해당 라우트 전용 조각·페이지 조립(SSR/스트리밍 경계와 함께 두기 쉬움).
+4. **`features/**/ui/`**, **`widgets/`** — FSD 슬라이스에 노출된 UI.
+5. **레거시 `containers/`** — 기존 화면만; 신규는 위 경로를 우선한다.
+
+`grep`, `Glob`, **Semantic 검색**, Storybook(있으면)으로 **이름·패턴**을 찾는다.
+
+## 신규 구현을 허용하는 경우
+
+- 위 탐색 후 **역할에 맞는 컴포넌트가 없음**이 명확할 때.
+- 기존 컴포넌트가 **API·접근성** 측면에서 맞지 않아 **래핑만으로는 위험**할 때 — 이 경우에도 **가장 가까운 DS를 베이스**로 두고, 신규는 **얇은 어댑터**로 둔다.
+
+## 신규 컴포넌트 배치 (가이드)
+
+- 여러 화면에서 쓸 가능성이 높으면 **`components/`** 또는 **`features/<기능>/ui/`** + public API (`index.ts`) 규칙을 따른다. (`.cursor/rules/project-architecture.mdc`)
+- 한 화면만이면 **`app/.../_components/`** 에 두고, 두 번째 화면에서 쓰이면 위로 승격을 검토한다.
+
+## 금지
+
+- `components/ds/` **내부 파일을 디자인 맞춘다며 직접 수정**하기.
+- DS에 **`Button`** 이 있는데 **`button` + Tailwind만**으로 동일 CTA를 새로 만들기(예외: DS로 불가능할 때만 팀 합의·최소 범위).
+
+## 관련
+
+- 토큰·DS 경계: `.cursor/rules/design-system.mdc`
+- 피그마→코드 타이포: `.cursor/rules/figma-to-code-typography.mdc`
+- 워크플로: `.cursor/skills/design-reuse-first/SKILL.md`

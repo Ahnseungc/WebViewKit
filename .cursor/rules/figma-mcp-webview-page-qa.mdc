@@ -1,0 +1,63 @@
+---
+description: >-
+  Figma 노드 기준으로 WebView 전체 페이지 QA 시 배경색 레이어 불일치와 아이콘 누락을
+  체크하는 전용 규칙. get_design_context/get_screenshot/get_metadata를 함께 사용한다.
+globs: "**/*.{tsx,ts}"
+alwaysApply: false
+---
+
+# Figma MCP — WebView 페이지 QA (배경색·아이콘 누락)
+
+목표: “컴포넌트 일부”가 아니라 **웹뷰 페이지 전체**를 기준으로,  
+1) 배경색 레이어 불일치, 2) 아이콘 누락을 빠르게 잡는다.
+
+## 1) 배경색 QA (전체 페이지)
+
+### A. Figma 기준 추출
+
+- `get_design_context`에서 **최상위 프레임 fill**과 주요 섹션 fill(`header`, `body`, `notice` 등)을 확인한다.
+- 필요 시 `get_metadata`로 섹션 노드 경계(좌표/크기)를 확인해 “어느 구간이 어떤 배경색”인지 표로 정리한다.
+- `get_screenshot` 기준 캡처를 확보해 색이 바뀌는 지점(헤더 아래, 구분 바, 푸터 전후)을 시각 기준으로 잡는다.
+
+### B. 코드 대조
+
+- 페이지 루트(`main`/최상위 래퍼) 배경 클래스가 Figma 최상위 fill과 일치하는지 본다.  
+  예: `bg-white` vs `bg-bg-secondary`.
+- 섹션별 배경 클래스(`bg-bg-*`, `bg-fill-*`)가 Figma 구간과 순서까지 맞는지 확인한다.
+- `-mx-*` + `w-[calc(...)]` 같은 확장 구간(전체 폭 divider/배경)이 있을 때, 실제로 **좌우 끝까지 같은 색 띠**가 이어지는지 확인한다.
+- WebView 공통: `device-max-width` 컬럼 바깥 영역과 안쪽 영역의 배경이 의도대로 분리되었는지 확인한다.
+
+### C. 합격 기준
+
+- “페이지 상단→하단” 스크롤 중 색 전환 지점이 Figma와 동일 순서/폭으로 보인다.
+- 의도 없는 `bg-white` 기본값/투명 배경으로 인해 뒤 배경색이 비치는 구간이 없다.
+
+## 2) 아이콘 누락 QA
+
+### A. Figma 아이콘 인벤토리
+
+- `get_metadata` 또는 `get_design_context`에서 아이콘/벡터 노드(`ic/*`, `icon/*`, `vector`)를 추린다.
+- 최소한 “섹션별 아이콘 개수 + 이름”을 체크리스트로 만든다.  
+  (예: 헤더 back 1, 보유현황 아이콘 2, 리뷰 별 아이콘 n, 유의사항 아이콘 1)
+
+### B. 코드 인벤토리 대조
+
+- 해당 페이지 파일 및 분리된 하위 컴포넌트에서 `components/svgIcons/*` import 목록을 확인한다.
+- 조건부 렌더(`showBadge`, `pendingCheckout` 등) 분기까지 포함해 “언제 보이는 아이콘인지”를 체크한다.
+- `<img>`/래스터 아이콘으로 대체된 항목이 없는지 확인한다. (아이콘은 SVG 컴포넌트 원칙)
+
+### C. 시각 대조
+
+- 구현 화면 캡처와 Figma 기준 캡처를 나란히 두고, 아이콘의 **존재/크기/정렬**까지 확인한다.
+- 누락·대체가 있으면 우선순위: `존재 여부` > `도메인 경로` > `사이즈/색 토큰`.
+
+## 3) 보고 형식(권장)
+
+- 배경색: `구간명 / Figma 값 / 코드 클래스 / 결과(OK|Mismatch)`
+- 아이콘: `구간명 / Figma 아이콘 / 코드 컴포넌트 / 조건부 여부 / 결과`
+
+## 관련
+
+- 3회 값 비교: `.cursor/rules/figma-mcp-three-pass-compare.mdc`
+- 스크린샷 QA: `.cursor/rules/figma-mcp-screenshot-qa.mdc`
+- 토큰·아이콘 원칙: `.cursor/rules/figma-mcp-verify-tokens-icons.mdc`

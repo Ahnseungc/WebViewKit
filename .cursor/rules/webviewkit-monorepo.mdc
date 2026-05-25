@@ -1,0 +1,31 @@
+---
+description: WebViewKit 모노레포 — npm 패키지 @ahnseungchan/webviewkit 개발 규칙
+globs: "packages/**/*.{ts,tsx,json,md}"
+alwaysApply: true
+---
+
+# WebViewKit Monorepo
+
+## 패키지
+
+- **Publish**: `packages/core` → `@ahnseungchan/webviewkit`
+- **Demo**: `packages/browser` (Vite)
+- 빌드: `pnpm --filter @ahnseungchan/webviewkit build` (`tsconfig.build.json`, 출력 `dist/`)
+
+## Dev Stack Roadmap
+
+- `StackRouterProvider` + `enableDevTools` (기본 development on)
+- `StackDevRoadmap` — 스택 depth·경로 dot 로드맵
+
+## 커밋
+
+- 한국어 또는 영문 conventional: `feat:`, `fix:`, `chore:`
+- `packages/core/dist`는 publish용으로 커밋 가능 (`.gitignore` 예외)
+
+## 에이전트
+
+- 구현: `webviewkit-core` / QA: `webviewkit-qa` / 파이프라인: `webviewkit-orchestrator`
+
+## 골디 소비처
+
+`goldie_front_main`의 `useStackRouter`·`stackRouterBridge`와 API 호환성 유지. breaking change 시 CHANGELOG·semver.

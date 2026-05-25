@@ -1,0 +1,51 @@
+---
+description: Goldie 프론트에서 Framer Motion 인터랙션 구현 규칙
+globs: "**/*.{tsx,ts}"
+alwaysApply: false
+---
+
+# Framer Motion Interaction Rules
+
+Goldie 프로젝트에서 Framer Motion 애니메이션을 구현할 때 아래 규칙을 따른다.
+
+## 1. 기본 원칙
+
+- UI를 돋보이게 하되 **정보 전달을 방해하지 않는 수준**으로 구현한다.
+- 토스 스타일을 기준으로 **짧고 명확한 전환**을 우선한다.
+- 장식용 모션보다 상태 전환(노출/숨김/성공/실패/로딩)의 의미 전달을 우선한다.
+
+## 2. 타이밍·이징 가이드
+
+- 권장 duration:
+  - 등장/퇴장: `0.2 ~ 0.35s`
+  - 리스트 재배치(layout): `0.2 ~ 0.3s`
+- 권장 ease: `[0.22, 1, 0.36, 1]` (빠르게 붙고 부드럽게 감속)
+- spring 사용 시 과한 bounce 금지 (`bounce` 낮게, `stiffness` 과도하게 높이지 않음)
+
+## 3. 구현 패턴
+
+- 노출/숨김: `AnimatePresence` + `motion.div` 조합을 사용한다.
+- 공간 변화를 포함한 전환(배너, 아코디언 등)은 `height`와 `padding`을 함께 애니메이션한다.
+- 레이아웃 시프트를 줄이기 위해 부모에 `overflow-hidden`을 설정한다.
+- 인터랙션 피드백은 `whileTap`, `whileHover`를 과도하게 쓰지 않는다 (모바일 우선).
+- 애니메이션 로직은 화면 컴포넌트에 직접 누적하지 말고 **별도 컴포넌트로 분리**한다.
+  - 권장: `PendingCheckoutBannerMotion.tsx`, `OrderNoticeMotion.tsx`처럼 역할이 드러나는 이름 사용.
+  - 한 파일이 길어지면(약 300줄 근접) 모션 래퍼와 표시 컴포넌트를 분리한다.
+
+## 4. 접근성·성능
+
+- `useReducedMotion`을 고려해 강한 모션은 축소 가능한 구조로 작성한다.
+- 큰 리스트/스크롤 영역에서 불필요한 `layout` 애니메이션을 남발하지 않는다.
+- SSR 화면에서 모션이 필요한 경우 클라이언트 경계(`use client` 또는 client tree import)를 확인한다.
+- **레이아웃 쉬프트(CLS) 방지**를 기본 원칙으로 한다.
+  - 배너/패널 노출 전후 레이아웃이 크게 변하는 영역은 최소 높이(`min-height`) 또는 예약 영역을 둔다.
+  - 가능한 경우 `transform`, `opacity` 기반 애니메이션을 우선하고, `height` 애니메이션은 필요한 구간에만 제한한다.
+  - `height: auto` 전환 시 부모 `overflow-hidden`을 유지하고, 인접 섹션의 갑작스러운 점프가 없는지 확인한다.
+  - 이미지/아이콘은 고정 `width/height` 또는 `next/image`로 크기를 먼저 확보해 모션 중 재배치를 방지한다.
+  - 텍스트 길이에 따라 높이가 달라질 수 있는 컴포넌트는 한 줄/말줄임(`truncate`) 등으로 변동 폭을 제어한다.
+
+## 5. Goldie 스타일 정합
+
+- 색상·타이포·라디우스는 기존 토큰(`styles/color.css`, `styles/typography.css`, `styles/radius.css`)을 유지한다.
+- DS 컴포넌트(`components/ds/`)는 직접 수정하지 않고 래핑 레벨에서 모션을 적용한다.
+- WebView 화면에서는 safe area와 하단 고정 영역 레이아웃(`webview-bottom-cta.mdc`)을 깨지 않도록 검증한다.

@@ -1,0 +1,85 @@
+---
+description: 공지사항·이벤트(새소식) API·정책 — 엔드포인트, NEW/읽음, 탭, 화면 구성
+globs: "**/app/(protected)/notice/**,**/services/notice/**,**/hooks/notice/**,**/menu/_src/components/MenuNewsSection.tsx"
+alwaysApply: false
+---
+
+# 공지사항 & 이벤트 (새소식)
+
+도메인 정책 출처: 안비손 부대표 Notion (2026-04 공유), Confluence 반영 2026-04-02, 최종 수정 2026-04-06. 프론트 구현 시 본 문서와 **백엔드/OpenAPI 스펙**을 함께 따른다.
+
+## 0. 코드베이스 재검증 (본 저장소 기준 · 2026-04)
+
+| 구분 | 내용 |
+| --- | --- |
+| **적용 범위** | `app/(protected)/notice/**`(탭 UI `notice/_src/tabs`), `services/notice/**`, `hooks/notice/**`, 메뉴 `MenuNewsSection`. **`app/(protected)/transaction-history/**/notice/**`** 는 거래 취소·안내 등 **다른 기능**이므로 본 규칙(새소식 API)과 혼동하지 않는다. |
+| **라우트** | 목록 `/notice`, 상세 `/notice/[id]`. 탭 쿼리 `?tab=notice` \| `?tab=event`. **`tab` 없이 `/notice`만 오면** `parseNoticeTabParam` 기준 **공지(`notice`) 탭이 기본값** (금 모으기 `router.push("/notice")` 와 정합). |
+| **Query keys** | `queryKeys.notice.list()` 전체 목록(메뉴 n뱃지·프리페치), `queryKeys.notice.infiniteList(category)` 목록 무한 스크롤, `queryKeys.notice.detail(id)` 상세. |
+| **인증(프론트)** | 브라우저 요청은 `lib/axios.ts` 의 `axiosInstance` + `getSession()` 기반 **Bearer** (정책의 USER 권한과 맞물림). 서버 컴포넌트 전용 prefetch는 세션/토큰 주입 방식이 다를 수 있으니 **서버용 API 헬퍼**를 백엔드 스펙에 맞춰 별도 둘 수 있음. |
+| **정책 vs 구현 갭** | 현재는 **`notice-mock.service` mock** — 7일 NEW·상세 진입 읽음·탭별 미읽음 카운트는 **API 연동 후** 반영. 목록 `isNew` 등은 스펙 확정 시 서버 필드로 교체. |
+
+## 1. API (클라이언트 연동)
+
+| 항목 | 내용 |
+| --- | --- |
+| **Base path** | `/v1/api/notice-event` (origin은 `getApiUrl()` 등 환경 변수, **경로는 이하 세그먼트**로 조합) |
+| **인증** | `Authorization: Bearer <access_token>` |
+| **권한** | USER |
+
+- 세부 경로·쿼리·요청/응답 스키마는 **배포된 API 문서(OpenAPI 등)** 가 SSOT. 본 파일은 베이스 경로만 고정한다.
+- `constants/domain.const.ts` 에 `API_VERSION` 등이 있으나, axios `baseURL`이 호스트만인지·`/v1` 포함인지 **실제 호출부와 env**를 보고 경로를 한 곳에서만 맞출 것(중복 `/v1` 방지).
+
+## 2. 진입·정보 구조 (사용자 앱)
+
+### 2.1 노출 위치
+
+- **전체 메뉴** > 새소식 > 공지사항 / 이벤트 행 → `?tab=` 매칭 후 목록 → 상세.
+- **금 모으기** 헤더 우측 **「새소식」** → 코드상 `/notice`(기본 탭 = 공지) → 목록 → 상세. 이벤트만 보려면 목록에서 **이벤트 탭** 선택.
+
+### 2.2 탭
+
+- 동일 화면 내 **공지사항 / 이벤트** (`notice` \| `event`).
+- 공지·이벤트 **읽음/NEW는 탭별 독립**(정책 §6).
+
+## 3. 리스트 정책
+
+- **정렬**: 탭별 **최신 등록순**.
+- **리스트 요소**: 제목, 업로드 날짜, NEW 여부(서버).
+- **서명**: 본문 하단 **「- 금골디 운영팀」** 고정.
+
+## 4. 상세 페이지 구성 (가능 항목)
+
+- 제목, 게시일, 본문(+ 서명), 이미지, 플로팅 CTA(링크), 공유(노출 여부는 데이터).
+- 댓글·좋아요·기타 반응 **없음** (읽기 전용).
+
+## 5. NEW 뱃지
+
+- **7일** 기준(정책). 상세 진입 시 읽음·NEW 처리는 **백엔드와 동기화**.
+- 7일 경과 시 자동 해제.
+- 메뉴·탭·리스트·헤딩 등 **미확인 NEW** 표시 가능(정책).
+
+## 6. 읽음 / 안읽음
+
+- **읽음**: 해당 글 **상세 진입** 시에만. 목록만 스크롤 ≠ 읽음.
+- 탭·상위 진입점 뱃지 로직은 정책 §6·§7(원문) 및 API 필드에 따름.
+
+## 7. 관리자·카테고리 (참고)
+
+- 탭·카테고리(금모으기/기타)·노출·플로팅·공유 노출 등은 **관리자·API 필드** 기준.
+
+## 8. 프론트 구현 체크리스트
+
+- [ ] `services/notice`: mock → **`/v1/api/notice-event` 연동** 시 서비스 모듈·타입 정리.
+- [ ] 상세 진입 시 **읽음 처리 API** 호출(스펙 확정 후 `NoticeDetailPage` 또는 레이아웃 effect).
+- [ ] NEW/미읽음: 목록·메뉴·탭은 **서버 `isNew` / unread 카운트** 등으로 치환.
+- [ ] `lib/query-keys.ts` 의 `notice.*` 와 React Query 훅 키 일치 유지.
+- [ ] UI: `design-system.mdc`, 스켈레톤: `skeleton.mdc`.
+
+## 9. 변경 이력 (정책 메타)
+
+| 날짜 | 요약 |
+| --- | --- |
+| 2026-04-02 | Confluence 최초 반영 (Notion 원본) |
+| 2026-04-06 | 진입/플로우, NEW·읽음, 상세, 관리자 확장 등 |
+
+정책·API 변경 시 §0·§5~§8 과 구현을 함께 갱신한다.

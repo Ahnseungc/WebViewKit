@@ -1,0 +1,60 @@
+---
+description: >-
+  Slack에 현재 작업 중인 Jira(GD) 이슈를 공유할 때 쓰는 마크다운 템플릿(티켓·브랜치·상태·링크),
+  MCP(plugin-slack-slack: slack_send_message / slack_send_message_draft, slack_search_channels),
+  Jira 조회(plugin-atlassian-atlassian: getJiraIssue 등), 채널 ID 하드코딩 금지·민감정보 배제.
+  Git 브랜치 규칙은 jira-git-branch.mdc와 연계.
+globs: ""
+alwaysApply: false
+---
+
+# Slack — 현재 작업 중 테스크 공유
+
+## 목적
+
+팀 채널(또는 지정 채널)에 **지금 진행 중인 Jira 이슈**를 한 블록으로 공유할 때 형식을 통일한다.
+
+## 메시지 템플릿 (복사 후 값만 치환)
+
+아래는 Slack MCP가 허용하는 **마크다운** 스타일(`**굵게**`, `` `코드` ``, 링크)을 사용한다.
+
+```markdown
+🔧 **작업 중 공유**
+• **티켓** | **<GD-번호>** — <이슈 제목>
+• **브랜치** | `<브랜치명>` (기준: `development` 등)
+• **상태** | <Jira 상태명 또는 한 줄 진행 상황>
+• **링크** | <https://goldie-team.atlassian.net/browse/GD-번호>
+```
+
+**한 줄 요약만 올릴 때 (짧은 버전)**
+
+```markdown
+🔧 작업 중: **<GD-번호>** <이슈 제목> · 브랜치 `<브랜치명>` · <링크>
+```
+
+## 채워 넣을 값
+
+| 치환자 | 출처 |
+|--------|------|
+| `<GD-번호>` | Jira 키 (예: `GD-997`) |
+| `<이슈 제목>` | Jira `summary` |
+| `<브랜치명>` | 저장소 규칙: 일반 작업은 `feature/GD-<번호>` (`.cursor/rules/jira-git-branch.mdc`) |
+| `<링크>` | `https://goldie-team.atlassian.net/browse/<키>` |
+| 상태 | Jira `status.name` 또는 담당자가 적는 한 줄 메모 |
+
+## Slack 전송 시 (에이전트)
+
+- MCP 서버 식별자는 **`plugin-slack-slack`** 일 수 있다(Cursor UI에는 `slack`으로 표시될 수 있음).
+- **채널 ID**는 저장소에 하드코딩하지 않는다. `slack_search_channels`로 검색하거나 **사용자에게 채널명·ID를 확인**한다.
+- 사용자가 문구를 검토하기 전이면 **`slack_send_message_draft`** 로 초안을 올리고, 확인 후 **`slack_send_message`** 로 전송한다.
+- **민감 정보**(토큰, 내부 URL 쿼리에 비밀 포함 등)는 넣지 않는다.
+
+## Jira 정보 조회 (에이전트)
+
+- Atlassian MCP: **`plugin-atlassian-atlassian`**
+- 이슈 키만 알 때: `getJiraIssue` 또는 `searchJiraIssuesUsingJql` (예: `key = GD-997`)
+
+## 관련 규칙
+
+- Git·Jira 브랜치: `.cursor/rules/jira-git-branch.mdc`
+- 상세 워크플로: `.cursor/skills/slack-current-task-share/SKILL.md`

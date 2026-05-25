@@ -1,0 +1,61 @@
+---
+description: >-
+  기능별 스펙은 (1) 단일 라우트면 app/.../_src/specs/ 컬로케이션 우선,
+  (2) 그 외 docs/specs/<슬러그>/README 진입점. Jira·Figma·라우트 매핑 명시.
+globs: "docs/**/*"
+alwaysApply: false
+---
+
+# 스펙 문서 — 기능별 폴더 (`docs/specs/`)
+
+## 목적
+
+스펙·기획·플로우 문서를 **기능(도메인) 단위로 묶어** 찾기·리뷰·버전 관리를 쉽게 한다.
+
+**위치 선택:** 한 라우트 트리에 대응하는 화면이면 **`app/.../<route>/_src/specs/README.md`** 에 두는 것을 우선한다 (FSD 컬로케이션 — `.cursor/rules/docs-spec-fsd-route-colocation.mdc`). 그렇지 않으면 **`docs/specs/<기능-슬러그>/`** 를 쓴다.
+
+## 디렉터리 규칙
+
+```
+docs/
+  specs/
+    <feature-slug>/           # 예: gold-exchange, collect-gold, new-sell
+      README.md               # 필수: 스펙 진입점 (요약·목차·링크)
+      ...                     # 선택: flow.md, api.md, decisions.md 등
+```
+
+### `<feature-slug>`
+
+- **kebab-case** (예: `gold-exchange`, `b2c-toss-payment`).
+- 한 기능에 Jira 에픽·여러 티켓이 묶여 있어도 **하나의 폴더**에 두고, README에서 티켓 목록을 적는다.
+- `app/` 라우트 이름과 1:1일 필요는 없으나, **팀이 이해하기 쉬운 제품 단위**로 나눈다.
+
+### `README.md` (진입점)에 넣을 것
+
+1. **한 줄 목적** — 무엇을 해결하는 기능인지.
+2. **범위 / 비목표** — 스펙 주도 개발 시 경계 명시.
+3. **관련 링크** — Jira (`GD-xxx`), Figma(노드 URL), 관련 PR·OpenAPI가 있으면 링크.
+4. **라우트·IA** — URL ↔ `app/` 경로 매핑 표 (필요 시).
+5. **상태** — Draft / Reviewed / Implemented 등 팀 합의 라벨.
+
+### 추가 파일 (선택)
+
+- 사용자 플로우만 길면 `flow.md`
+- API 필드만 길면 `api.md`
+- 결정 기록은 `decisions.md` 또는 ADR 패턴
+
+## 기존 문서와의 관계
+
+- 이미 루트에 있는 `docs/*.md` (예: `new-sell-screen-flow.md`)는 **당장 이동하지 않아도 된다**. 새 기능부터 **`docs/specs/`** 를 쓰고, 터치할 때 **점진적으로** `docs/specs/<slug>/` 로 옮기며 README에 리다이렉트 한 줄을 적어도 된다.
+- **전역** 성격(보안 분석, 도커, 에러 코드 전체 목록 등)은 `docs/specs/` 밖 **`docs/` 직하위**에 둬도 된다.
+
+## 금지·주의
+
+- 스펙만을 위해 **`components/ds/` 를 수정하지 않는다** (디자인 시스템 규칙과 동일).
+- 민감 정보(시크릿, 내부 미공개 URL의 자격 증명)는 스펙에 넣지 않는다.
+
+## 관련
+
+- 라우트 컬로케이션 스펙: `.cursor/rules/docs-spec-fsd-route-colocation.mdc`
+- URL 경로 전체 맵: `docs/전체-URL-경로-매핑.md`
+- 에이전트 워크플로: `.cursor/skills/spec-docs-by-feature/SKILL.md`, `.cursor/skills/spec-docs-fsd-colocation/SKILL.md`

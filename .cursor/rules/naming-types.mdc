@@ -1,0 +1,36 @@
+---
+description: Goldie 프로젝트의 네이밍 및 타입 정의 위치 규칙
+globs: "**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Naming & Types - Goldie Project
+
+파일·폴더·컴포넌트·변수 네이밍과 인터페이스/타입 정의 위치, `*.types.ts` / `*.interface.ts` 사용 규칙입니다.
+
+## 1. 파일·폴더
+
+- **컴포넌트 파일**: PascalCase. 예: `DirectParcelPageContainer.tsx`, `ChatHeader.tsx`.
+- **훅·유틸·상수**: camelCase 또는 kebab-case. 예: `useTradeDetail.ts`, `formatPhoneNumber.ts`, `query-keys.ts`. 폴더는 도메인에 따라 camelCase 또는 kebab-case를 일관되게 사용합니다.
+- **테스트**: 대상 파일과 같은 이름 + `.test.ts(x)` 또는 `__test__/` 하위. 예: `formatPhoneNumber.test.ts`.
+- **스키마·타입 전용**: `*.schema.ts`, `*.types.ts`, `*.interface.ts` 등 접미사를 붙여 역할을 구분할 수 있습니다.
+
+## 2. 컴포넌트·변수
+
+- **컴포넌트**: PascalCase. 예: `DirectParcelPageContainer`, `StateButtonBox`.
+- **훅**: `use` 접두사 + camelCase. 예: `useTradeDetail`, `useAppraisalImages`.
+- **boolean**: `is~`, `has~`, `should~`. 예: `isLoading`, `hasError`, `shouldValidate`.
+- **이벤트 핸들러**: `handle~` (내부), `on~` (props). 예: `handleSubmit`, `onChange`.
+- **상수**: 전역/열거형은 UPPER_SNAKE. 객체·배열 상수는 camelCase도 허용. 예: `MAX_COUNT`, `queryKeys.tradeHistory.detail`.
+
+## 3. 인터페이스·타입 정의 위치
+
+- **컴포넌트 전용**: 해당 컴포넌트 파일 상단에 `interface Props` 또는 `ComponentNameProps`를 두고, 한 파일에서만 쓰는 타입은 같은 파일에 둡니다.
+- **도메인·공통**: 여러 파일에서 쓰는 타입은 도메인 폴더의 `*.types.ts`, `*.interface.ts` 또는 서비스/훅과 같은 폴더의 타입 파일에 둡니다. 예: `services/transaction-history/getAppraisalImages.interface.ts`, `types/funnel.types.ts`.
+- **전역 타입**: 앱 전역에서 쓰는 타입은 `types/` 루트 또는 `lib/` 내 타입 정의 파일에 둡니다.
+
+## 4. *.types.ts / *.interface.ts 사용
+
+- **선택**: 팀에서 `*.types.ts`(여러 타입·타입 유틸)와 `*.interface.ts`(API·도메인 인터페이스 위주)를 구분해 쓸 수 있습니다. 일관성만 유지하면 됩니다.
+- **export**: 타입만 export하는 파일은 `export type { ... }` 또는 named export로 내보내고, 필요한 곳에서 `import type`으로 가져옵니다.
+- **순환 참조**: 타입 파일이 구현 파일을 import하지 않도록 하고, 구현 → 타입 방향 의존성만 두어 순환을 피합니다.
