@@ -1,13 +1,18 @@
 # @ahnseungchan/webviewkit
 
-React WebView·하이브리드 앱용 **스택 네비게이션** 라이브러리입니다.  
-`history.pushState` 기반으로 push/back 전환과 CSS 슬라이드 애니메이션을 제공합니다.
+React **WebView·하이브리드 앱**용 스택(push/back) 네비게이션 라이브러리입니다.  
+`history.pushState`와 CSS 슬라이드 전환으로 네이티브 앱에 가까운 화면 이동을 구현합니다.
 
 ## 설치
 
 ```bash
 npm install @ahnseungchan/webviewkit
-# peer: react, react-dom, @emotion/react, @emotion/styled
+```
+
+**Peer dependencies** (프로젝트에 직접 설치):
+
+```bash
+npm install react react-dom @emotion/react @emotion/styled
 ```
 
 ## Quick Start
@@ -20,11 +25,16 @@ function Home() {
   return <button onClick={() => push("/about")}>About</button>;
 }
 
+function About() {
+  const { back } = useStackRouter();
+  return <button onClick={back}>Back</button>;
+}
+
 export default function App() {
   return (
     <StackRouterProvider
       maxWidth="600px"
-      enableDevTools // 개발 시 스택 로드맵 표시 (기본: development에서 on)
+      enableDevTools
       Activities={[
         { path: "/", element: <Home /> },
         { path: "/about", element: <About /> },
@@ -35,40 +45,49 @@ export default function App() {
 }
 ```
 
-## Dev Stack Roadmap
+## Dev Stack Roadmap (1.2.0)
 
-`enableDevTools` 가 켜지면 화면 우하단에 **스택 깊이·경로 로드맵**(점→선)이 표시됩니다.
+개발 모드에서 스택이 몇 장 쌓였는지 **눈으로** 확인할 수 있습니다.
 
-- 현재 쌓인 페이지 수
-- 경로 목록 (top 표시)
-- 시각적 dot roadmap
+| 옵션 | 동작 |
+|------|------|
+| `enableDevTools={true}` | 우하단 로드맵 항상 표시 |
+| `enableDevTools={false}` | 숨김 |
+| 생략 | `development`에서만 표시, production에서는 숨김 |
 
-프로덕션에서는 `enableDevTools={false}` 또는 미설정(기본 off in production)을 권장합니다.
+로드맵에 표시되는 정보:
+
+- **stack × N** — 현재 스택 깊이
+- **점→선** — 쌓인 페이지 순서
+- **경로 목록** — 각 `path`, 최상단에 `← top`
+
+```tsx
+import { StackDevRoadmap } from "@ahnseungchan/webviewkit";
+
+// StackRouterProvider 없이 디버그 UI만 쓸 때
+<StackDevRoadmap
+  pages={[{ path: "/" }, { path: "/detail" }]}
+  currentPath="/detail"
+/>
+```
 
 ## API
 
 | Export | 설명 |
 |--------|------|
 | `StackRouterProvider` | 스택 라우터 루트 |
-| `useStackRouter` | `push`, `back`, `replace`, `visiblePages` … |
-| `history` | `pushState` 래퍼 |
-| `BackRouter`, `StackHeader` | UI 보조 |
-| `StackDevRoadmap` | 단독 로드맵 UI |
-| `STACK_TRANSITION_MS` | 전환 시간 상수 (500) |
+| `useStackRouter` | `push`, `back`, `replace`, `forward`, `visiblePages` |
+| `history` | `pushState` / `popstate` 래퍼 (SSR-safe) |
+| `BackRouter` | 뒤로가기 버튼 |
+| `StackHeader` | 경로 표시 헤더 |
+| `StackDevRoadmap` | 스택 로드맵 오버레이 |
+| `STACK_TRANSITION_MS` | 전환 ms 상수 (`500`) |
+| `Direction`, `HistoryAction` | 타입·enum |
 
-## Changelog
+## 골디 앱 연동 참고
 
-### 1.1.0
-
-- Dev **Stack Roadmap** 오버레이 (`enableDevTools`)
-- npm `main` → `dist/index.js` 빌드 경로 수정
-- 미사용 `gsap` 의존성 제거
-- SSR-safe `history` (window 가드)
-- 전환 시간 `STACK_TRANSITION_MS` 로 통일
-
-### 1.0.x
-
-- stack-router, history, browser 예제 (2025-05)
+B2C WebView에서는 앱 브릿지(`stackRouterBridge`)와 함께 쓰는 경우가 많습니다.  
+이 패키지는 **웹 단독 스택 UI**이며, RN 브릿지와는 별도 레이어입니다.
 
 ## License
 

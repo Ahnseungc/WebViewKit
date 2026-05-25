@@ -1,6 +1,6 @@
 {
   "name": "@ahnseungchan/webviewkit",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Stack-based navigation for React WebView apps with dev stack roadmap",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
