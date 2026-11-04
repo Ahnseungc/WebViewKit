@@ -1,16 +1,14 @@
-import { useStackRouter } from "../../core/src/stack-router/stack-router-provider";
-
-import BackRouter from "../../core/src/stack-router/_components/back-router";
+import { useStackRouter } from "@ahnseungchan/webviewkit";
 
 const About = () => {
-  const { back } = useStackRouter();
+  const { back, push } = useStackRouter();
 
   return (
-    <div>
-      <BackRouter />
-      <h1>About</h1>
-      <button onClick={() => back()}>back to Home</button>
-    </div>
+    <main style={{ padding: 16 }}>
+      <h2>About</h2>
+      <button onClick={() => push("/detail/99")}>Detail 99</button>
+      <button onClick={() => back()}>Back</button>
+    </main>
   );
 };
 

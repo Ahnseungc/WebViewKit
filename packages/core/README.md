@@ -1,108 +1,115 @@
 # @ahnseungchan/webviewkit
 
-React **WebView·하이브리드 앱**용 스택(push/back) 네비게이션 라이브러리입니다.  
+React **WebView·하이브리드 앱**용 스택(push/back) 네비게이션 + 네이티브 브릿지(RN·Flutter) 라이브러리입니다.  
 `history.pushState`와 CSS 슬라이드 전환으로 네이티브 앱에 가까운 화면 이동을 구현합니다.
 
 ## 설치
 
 ```bash
 npm install @ahnseungchan/webviewkit
-```
-
-**Peer dependencies** (프로젝트에 직접 설치):
-
-```bash
-npm install react react-dom @emotion/react @emotion/styled
+npm install react react-dom @emotion/react @emotion/styled   # peer (react >= 18)
 ```
 
 ## Quick Start
 
 ```tsx
-import { StackRouterProvider, useStackRouter } from "@ahnseungchan/webviewkit";
+import {
+  StackRouterProvider,
+  useParams,
+  useStackRouter,
+} from "@ahnseungchan/webviewkit";
 
 function Home() {
   const { push } = useStackRouter();
-  return <button onClick={() => push("/about")}>About</button>;
+  return <button onClick={() => push("/detail/1?tab=info")}>Detail</button>;
 }
 
-function About() {
+function Detail() {
+  const { id } = useParams<{ id: string }>();
   const { back } = useStackRouter();
-  return <button onClick={back}>Back</button>;
+  return <button onClick={back}>Back from {id}</button>;
 }
 
 export default function App() {
   return (
     <StackRouterProvider
-      maxWidth="600px"
-      enableDevTools
       Activities={[
         { path: "/", element: <Home /> },
-        { path: "/about", element: <About /> },
+        { path: "/detail/:id", element: <Detail /> },
       ]}
       initialActivity={{ path: "/", element: <Home /> }}
+      onBackAtRoot={() => window.close()}
     />
   );
 }
 ```
 
-## Dev Stack Roadmap (1.2.0)
+## 동작 규칙
 
-개발 모드에서 스택이 몇 장 쌓였는지 **눈으로** 확인할 수 있습니다.
-
-| 옵션 | 동작 |
+| 상황 | 동작 |
 |------|------|
-| `enableDevTools={true}` | 우하단 로드맵 항상 표시 |
-| `enableDevTools={false}` | 숨김 |
-| 생략 | `development`에서만 표시, production에서는 숨김 |
+| `push(path)` | 항상 새 엔트리. 전환 중이면 무시(`false`) |
+| 같은 path 다시 push | 새 인스턴스가 쌓인다. 기존 페이지로 가려면 `popTo(path)` |
+| 브라우저·하드웨어 back | popstate 로 스택 pop (URL·화면 항상 일치) |
+| 루트에서 `back()` | history 를 건드리지 않고 `onBackAtRoot()` |
+| 미등록 path | URL 변경 없음, dev 경고 + `onNotFound(path)` |
+| 새로고침·딥링크 | `restoreStack="with-root"`(기본) → `[root, 대상]`, `"top-only"` → `[대상]` |
+| 아래 깔린 페이지 | `visibility: hidden` + `inert` + `aria-hidden` |
+| `prefers-reduced-motion` | 전환 0ms |
 
-로드맵에 표시되는 정보:
+## `StackRouterProvider` props
 
-- **stack × N** — 현재 스택 깊이
-- **점→선** — 쌓인 페이지 순서
-- **경로 목록** — 각 `path`, 최상단에 `← top`
+| prop | 기본 | 설명 |
+|------|------|------|
+| `initialActivity` | — | 루트 페이지. 마운트 시 1회만 읽음 |
+| `Activities` | `[]` | `{ path, element }[]`. path 에 `:param` 사용 가능 |
+| `transition` | `"slide"` | `"slide"` · `"fade"` · `"none"` |
+| `duration` | `300` | 전환 ms |
+| `restoreStack` | `"with-root"` | 딥링크 복원 정책 |
+| `onBackAtRoot` / `onNotFound` | — | 콜백 |
+| `isShowHeader` | `false` | `StackHeader` 렌더 |
+| `safeArea` | `false` | `env(safe-area-inset-*)` padding |
+| `maxWidth` | `"600px"` | 본문 최대 폭 |
+| `enableDevTools` | dev 에서 true | 스택 로드맵 오버레이 |
+| `bridge` | — | `true` 또는 `{ allowUrl, onError, emitStackChanged }` — 네이티브 연동 |
 
-```tsx
-import { StackDevRoadmap } from "@ahnseungchan/webviewkit";
+## Hooks
 
-// StackRouterProvider 없이 디버그 UI만 쓸 때
-<StackDevRoadmap
-  pages={[{ path: "/" }, { path: "/detail" }]}
-  currentPath="/detail"
-/>
-```
+| hook | 반환 |
+|------|------|
+| `useStackRouter()` | `push`, `replace`, `reset`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `currentState`, `entries`, `isTransitioning` |
+| `useActivity()` | 현재 페이지의 `{ key, path, pattern, params, query, data, index, isTop }` |
+| `useParams()` | `params` |
 
-## API
+테마는 CSS 변수로 바꿉니다: `--wvk-page-bg`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.
 
-| Export | 설명 |
-|--------|------|
-| `StackRouterProvider` | 스택 라우터 루트 |
-| `useStackRouter` | `push`, `back`, `replace`, `forward`, `visiblePages` |
-| `history` | `pushState` / `popstate` 래퍼 (SSR-safe) |
-| `BackRouter` | 뒤로가기 버튼 |
-| `StackHeader` | 경로 표시 헤더 |
-| `StackDevRoadmap` | 스택 로드맵 오버레이 |
-| `WebViewBridgeProvider` | RN/Flutter 브릿지 (protocol v1) |
-| `getStackRouterBridge` | web → native 스택 호출 |
-| `STACK_TRANSITION_MS` | 전환 ms 상수 (`500`) |
-| `Direction`, `HistoryAction` | 타입·enum |
-
-## Native Bridge (1.3.0)
-
-하이브리드 앱에서 **웹 스택 UI**와 **네이티브(WebView) 스택**을 같은 프로토콜로 맞출 때 사용합니다.  
-React Native · Flutter · 브라우저 단독 모두 지원합니다.
+## Native Bridge
 
 ```tsx
-import { WebViewBridgeProvider, getStackRouterBridge } from "@ahnseungchan/webviewkit";
+// 1) 스택 라우터와 네이티브를 바로 연결
+<StackRouterProvider bridge {...props} />
 
-// native → web: router handlers / web → native: bridge client
-<WebViewBridgeProvider stack={{ push, replace, pop, reset }} />;
+// 2) Next.js 등 다른 라우터와 연결
+<WebViewBridgeProvider stack={{ push, replace, pop, reset }} />
 
-await getStackRouterBridge()?.push("/detail");
+// 3) web → native 호출
+import { BridgeError, getStackRouterBridge } from "@ahnseungchan/webviewkit";
+try {
+  const { result } = (await getStackRouterBridge()?.push("/detail")) ?? {};
+} catch (error) {
+  if (error instanceof BridgeError && error.code === "TIMEOUT") { /* ... */ }
+}
 ```
 
-- Flutter: `stackPush` / `stackPop` 등 레거시 핸들러 또는 JSON envelope
-- React Native: `ReactNativeWebView.postMessage`
-- 프로토콜 상세: [docs/native-bridge-protocol.md](../../docs/native-bridge-protocol.md)
+- inbound·outbound URL 은 기본적으로 **같은 origin 경로만** 허용합니다(`javascript:`·외부 URL 거부). `allowUrl` 로 교체할 수 있습니다.
+- Flutter 브릿지가 늦게 주입돼도(`flutterInAppWebViewPlatformReady`) 감지 후 설치합니다.
+- 하드웨어 back: 네이티브가 `back.request` 를 보내면 웹이 `{ handled }` 로 회신합니다. `handled: false` 면 앱이 종료·닫기를 판단합니다.
+
+프로토콜 상세: [docs/native-bridge-protocol.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/native-bridge-protocol.md)
+
+## 1.x → 2.0
+
+[CHANGELOG](https://github.com/Ahnseungc/WebViewKit/blob/main/CHANGELOG.md#200---2026-11-04) 의 Breaking · Migration 을 참고하세요.
 
 ## License
 

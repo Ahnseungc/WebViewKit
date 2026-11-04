@@ -1,17 +1,22 @@
-import { useStackRouter } from "../../core/src/stack-router/stack-router-provider";
-import Header from "../../core/src/stack-router/_components/header";
+import { useStackRouter } from "@ahnseungchan/webviewkit";
 
 const Home = () => {
   const { push } = useStackRouter();
 
   return (
-    <div>
-      {/* <Header /> */}
-      <h1>Home</h1>
-      <button onClick={() => push("/about", { title: "About" })}>
-        Go to About
-      </button>
-    </div>
+    <main style={{ padding: 16 }}>
+      <h2>Home</h2>
+      <button onClick={() => push("/about")}>Go to About</button>
+      <ul>
+        {[1, 2, 3].map((id) => (
+          <li key={id}>
+            <button onClick={() => push(`/detail/${id}?tab=info`, { id })}>
+              Detail {id}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </main>
   );
 };
 

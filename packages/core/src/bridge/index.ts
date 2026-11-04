@@ -1,53 +1,77 @@
 export {
-  BRIDGE_PROTOCOL_VERSION,
-  BRIDGE_NAMESPACE,
-  STACK_BRIDGE_METHODS,
-  FLUTTER_LEGACY_STACK_HANDLERS,
-  FLUTTER_UNIFIED_HANDLER,
-  RN_BRIDGE_HANDLER,
-  createBridgeId,
-  createBridgeEnvelope,
-  isBridgeEnvelope,
-  parseBridgeMessage,
-  serializeBridgeMessage,
-} from "./protocol";
-
+  type BridgeRequestOptions,
+  type BridgeResult,
+  createWebViewBridgeClient,
+  WebViewBridgeClient,
+  type WebViewBridgeClientOptions,
+} from "./client";
+export {
+  detectBridgeHost,
+  FLUTTER_READY_EVENT,
+  isNativeBridgeHost,
+  waitForBridgeHost,
+  type WaitForBridgeHostOptions,
+} from "./detect-host";
+export {
+  BRIDGE_ERROR_CODES,
+  BridgeError,
+  type BridgeErrorCode,
+} from "./errors";
+export type { FlutterInAppWebViewBridge } from "./globals";
+export {
+  type BridgeHostCleanup,
+  emitBridgeEnvelope,
+  handleBridgeMessage,
+  installBridgeHost,
+  type InstallBridgeHostOptions,
+  type StackRouterHostHandlers,
+} from "./host";
 export type {
+  BackRequestResult,
+  BridgeEnvelope,
+  BridgeErrorBody,
   BridgeHostKind,
   StackBridgeMethod,
+  StackChangedPayload,
   StackMeta,
   StackPushPayload,
   StackReplacePayload,
   StackResetPayload,
-  BridgeEnvelope,
-  BridgeErrorBody,
 } from "./protocol";
-
-export { detectBridgeHost, isNativeBridgeHost } from "./detect-host";
 export {
-  createBridgeTransport,
-  type BridgeTransport,
-  type BridgeTransportOptions,
-} from "./transport";
-export {
-  WebViewBridgeClient,
-  createWebViewBridgeClient,
-  type WebViewBridgeClientOptions,
-} from "./client";
-export {
-  installBridgeHost,
-  handleBridgeMessage,
-  emitBridgeEnvelope,
-  type InstallBridgeHostOptions,
-  type StackRouterHostHandlers,
-  type BridgeHostCleanup,
-} from "./host";
+  BACK_REQUEST_METHOD,
+  BRIDGE_NAMESPACE,
+  BRIDGE_PROTOCOL_VERSION,
+  BRIDGE_RESPONSE_METHOD,
+  createBridgeEnvelope,
+  createBridgeId,
+  createBridgeResponse,
+  FLUTTER_LEGACY_STACK_HANDLERS,
+  FLUTTER_UNIFIED_HANDLER,
+  isBridgeEnvelope,
+  parseBridgeMessage,
+  RN_BRIDGE_HANDLER,
+  serializeBridgeMessage,
+  STACK_BRIDGE_METHODS,
+} from "./protocol";
 export {
   createStackRouterBridge,
+  type CreateStackRouterBridgeOptions,
   getStackRouterBridge,
   installStackRouterBridge,
+  resetStackRouterBridgeCache,
   type StackRouterBridge,
-  type CreateStackRouterBridgeOptions,
 } from "./stack-router-bridge";
-export { WebViewBridgeProvider } from "./WebViewBridgeProvider";
+export {
+  type BridgeTransport,
+  type BridgeTransportOptions,
+  createBridgeTransport,
+} from "./transport";
+export {
+  type AllowUrl,
+  assertStackUrl,
+  isSafeStackUrl,
+  toStackPath,
+} from "./url-policy";
 export type { WebViewBridgeProviderProps } from "./WebViewBridgeProvider";
+export { WebViewBridgeProvider } from "./WebViewBridgeProvider";

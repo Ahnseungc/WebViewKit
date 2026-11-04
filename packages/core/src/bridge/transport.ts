@@ -1,10 +1,11 @@
 import { detectBridgeHost } from "./detect-host";
+import { BRIDGE_ERROR_CODES, toBridgeError } from "./errors";
 import type { BridgeEnvelope, BridgeHostKind } from "./protocol";
 import {
   FLUTTER_LEGACY_STACK_HANDLERS,
   FLUTTER_UNIFIED_HANDLER,
-  STACK_BRIDGE_METHODS,
   serializeBridgeMessage,
+  STACK_BRIDGE_METHODS,
 } from "./protocol";
 
 export type BridgeTransportOptions = {
@@ -14,29 +15,32 @@ export type BridgeTransportOptions = {
 
 export interface BridgeTransport {
   readonly host: BridgeHostKind;
-  send(envelope: BridgeEnvelope): Promise<void>;
+  /** Flutter 는 callHandler 반환값, RN·browser 는 undefined */
+  send(envelope: BridgeEnvelope): Promise<unknown>;
 }
 
-function stackMethodToLegacyHandler(method: string): string | null {
-  switch (method) {
-    case STACK_BRIDGE_METHODS.PUSH:
-      return FLUTTER_LEGACY_STACK_HANDLERS.push;
-    case STACK_BRIDGE_METHODS.REPLACE:
-      return FLUTTER_LEGACY_STACK_HANDLERS.replace;
-    case STACK_BRIDGE_METHODS.POP:
-      return FLUTTER_LEGACY_STACK_HANDLERS.pop;
-    case STACK_BRIDGE_METHODS.RESET:
-      return FLUTTER_LEGACY_STACK_HANDLERS.reset;
-    default:
-      return null;
-  }
+const LEGACY_HANDLER_BY_METHOD: Record<string, string> = {
+  [STACK_BRIDGE_METHODS.PUSH]: FLUTTER_LEGACY_STACK_HANDLERS.push,
+  [STACK_BRIDGE_METHODS.REPLACE]: FLUTTER_LEGACY_STACK_HANDLERS.replace,
+  [STACK_BRIDGE_METHODS.POP]: FLUTTER_LEGACY_STACK_HANDLERS.pop,
+  [STACK_BRIDGE_METHODS.RESET]: FLUTTER_LEGACY_STACK_HANDLERS.reset,
+};
+
+function unavailable(host: BridgeHostKind): never {
+  throw new Error(`${host} bridge is not available`);
 }
 
 function createReactNativeTransport(): BridgeTransport {
   return {
     host: "react-native",
     async send(envelope) {
-      window.ReactNativeWebView!.postMessage(serializeBridgeMessage(envelope));
+      try {
+        const bridge = window.ReactNativeWebView ?? unavailable("react-native");
+        bridge.postMessage(serializeBridgeMessage(envelope));
+        return undefined;
+      } catch (error) {
+        throw toBridgeError(error, BRIDGE_ERROR_CODES.BRIDGE_UNAVAILABLE);
+      }
     },
   };
 }
@@ -49,29 +53,27 @@ function createFlutterTransport(
   return {
     host: "flutter",
     async send(envelope) {
-      const call = window.flutter_inappwebview!.callHandler.bind(
-        window.flutter_inappwebview
-      );
-
-      if (useLegacy) {
-        const handler = stackMethodToLegacyHandler(envelope.method);
-        if (handler) {
-          const payload = envelope.payload as
-            | { url?: string; meta?: unknown }
-            | undefined;
-          if (envelope.method === STACK_BRIDGE_METHODS.POP) {
-            await call(handler);
-            return;
-          }
-          const url = payload?.url ?? "";
-          const meta =
-            payload && "meta" in payload ? payload.meta ?? null : null;
-          await call(handler, url, meta);
-          return;
-        }
+      const bridge = window.flutter_inappwebview;
+      if (!bridge?.callHandler) {
+        throw toBridgeError(
+          new Error("flutter bridge is not available"),
+          BRIDGE_ERROR_CODES.BRIDGE_UNAVAILABLE
+        );
       }
-
-      await call(FLUTTER_UNIFIED_HANDLER, serializeBridgeMessage(envelope));
+      const call = bridge.callHandler.bind(bridge);
+      const handler = useLegacy
+        ? LEGACY_HANDLER_BY_METHOD[envelope.method]
+        : null;
+      if (!handler) {
+        return call(FLUTTER_UNIFIED_HANDLER, serializeBridgeMessage(envelope));
+      }
+      if (envelope.method === STACK_BRIDGE_METHODS.POP) {
+        return call(handler);
+      }
+      const payload = envelope.payload as
+        | { url?: string; meta?: unknown }
+        | undefined;
+      return call(handler, payload?.url ?? "", payload?.meta ?? null);
     },
   };
 }
@@ -79,7 +81,8 @@ function createFlutterTransport(
 const browserTransport: BridgeTransport = {
   host: "browser",
   async send() {
-    /* no native host — web-only */
+    // no native host — web-only
+    return undefined;
   },
 };
 

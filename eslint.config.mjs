@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["**/node_modules/", "**/dist/"],
+    ignores: ["**/node_modules/", "**/dist/", "**/coverage/"],
   },
   tseslint.configs.recommended,
   {
@@ -59,13 +59,13 @@ export default tseslint.config(
     },
   },
   {
-    files: ["*.js", "*.cjs", "*.cts"],
+    files: ["**/*.js", "**/*.cjs", "**/*.cts"],
     rules: {
       "@typescript-eslint/no-var-requires": "off",
     },
   },
   {
-    files: ["*.test.ts"],
+    files: ["**/*.test.ts", "**/*.test.tsx"],
     rules: {
       "@typescript-eslint/ban-ts-comment": "off",
     },

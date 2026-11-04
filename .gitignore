@@ -1,6 +1,5 @@
 node_modules/
 dist/
-!packages/core/dist/
 .DS_Store
 *.tgz
 *.tsbuildinfo

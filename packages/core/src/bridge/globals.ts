@@ -1,5 +1,5 @@
-import type { StackRouterBridge } from "./stack-router-bridge";
 import type { StackMeta } from "./protocol";
+import type { StackRouterBridge } from "./stack-router-bridge";
 
 export type FlutterInAppWebViewBridge = {
   callHandler: (handlerName: string, ...args: unknown[]) => Promise<unknown>;

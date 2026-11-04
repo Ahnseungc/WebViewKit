@@ -1,16 +1,35 @@
+import type { BridgeRequestOptions, BridgeResult } from "./client";
 import { createWebViewBridgeClient } from "./client";
 import { detectBridgeHost, isNativeBridgeHost } from "./detect-host";
 import type { StackMeta } from "./protocol";
 import type { BridgeTransportOptions } from "./transport";
+import type { AllowUrl } from "./url-policy";
 
 export type StackRouterBridge = {
-  push: (url: string, meta?: StackMeta) => Promise<unknown>;
-  replace: (url: string, meta?: StackMeta) => Promise<unknown>;
-  pop: () => Promise<unknown>;
-  reset: (url: string) => Promise<unknown>;
+  push: (
+    url: string,
+    meta?: StackMeta,
+    options?: BridgeRequestOptions
+  ) => Promise<BridgeResult>;
+  replace: (
+    url: string,
+    meta?: StackMeta,
+    options?: BridgeRequestOptions
+  ) => Promise<BridgeResult>;
+  pop: (options?: BridgeRequestOptions) => Promise<BridgeResult>;
+  reset: (
+    url: string,
+    meta?: StackMeta,
+    options?: BridgeRequestOptions
+  ) => Promise<BridgeResult>;
 };
 
-export type CreateStackRouterBridgeOptions = BridgeTransportOptions;
+export type CreateStackRouterBridgeOptions = BridgeTransportOptions & {
+  allowUrl?: AllowUrl;
+  timeoutMs?: number;
+};
+
+let cachedBridge: StackRouterBridge | null = null;
 
 /**
  * Web → native stack navigation (Flutter `callHandler` / RN `postMessage`).
@@ -25,16 +44,22 @@ export function createStackRouterBridge(
   const client = createWebViewBridgeClient(options);
 
   return {
-    push: (url, meta) => client.stackPush(url, meta ?? null),
-    replace: (url, meta) => client.stackReplace(url, meta ?? null),
-    pop: () => client.stackPop(),
-    reset: (url) => client.stackReset(url),
+    push: (url, meta, requestOptions) =>
+      client.stackPush(url, meta ?? null, requestOptions),
+    replace: (url, meta, requestOptions) =>
+      client.stackReplace(url, meta ?? null, requestOptions),
+    pop: (requestOptions) => client.stackPop(requestOptions),
+    reset: (url, meta, requestOptions) =>
+      client.stackReset(url, meta ?? null, requestOptions),
   };
 }
 
+/** `window.stackRouterBridge` → 모듈 캐시 → 새로 생성 후 캐시 */
 export function getStackRouterBridge(): StackRouterBridge | null {
   if (typeof window === "undefined") return null;
-  return window.stackRouterBridge ?? createStackRouterBridge() ?? null;
+  if (window.stackRouterBridge) return window.stackRouterBridge;
+  if (!cachedBridge) cachedBridge = createStackRouterBridge();
+  return cachedBridge;
 }
 
 export function installStackRouterBridge(
@@ -46,4 +71,9 @@ export function installStackRouterBridge(
     window.stackRouterBridge = bridge;
   }
   return bridge;
+}
+
+/** 테스트·호스트 전환용 캐시 초기화 */
+export function resetStackRouterBridgeCache(): void {
+  cachedBridge = null;
 }

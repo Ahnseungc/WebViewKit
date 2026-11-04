@@ -86,7 +86,9 @@ export function StackDevRoadmap({
                   borderRadius: "50%",
                   flexShrink: 0,
                   background: isCurrent ? "#00e8b8" : "#475569",
-                  boxShadow: isCurrent ? "0 0 10px rgba(0,232,184,0.85)" : "none",
+                  boxShadow: isCurrent
+                    ? "0 0 10px rgba(0,232,184,0.85)"
+                    : "none",
                   transition: "all 0.2s ease",
                 }}
               />

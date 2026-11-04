@@ -1,7 +1,7 @@
-import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
-import BackRouter from "../stack-router/_components/back-router";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import React from "react";
+import BackRouter from "../stack-router/_components/back-router";
 import { useStackRouter } from "../stack-router/stack-router-provider";
 
 jest.mock("../stack-router/stack-router-provider", () => ({
@@ -62,17 +62,22 @@ describe("BackRouter", () => {
     expect(svg).toHaveAttribute("viewBox", "0 0 24 24");
   });
 
-  it("handles hover and active states", async () => {
+  it("has an accessible label (default and custom)", () => {
+    const { rerender } = render(<BackRouter />);
+    expect(
+      screen.getByRole("button", { name: "뒤로 가기" })
+    ).toBeInTheDocument();
+
+    rerender(<BackRouter label="Back" />);
+    expect(screen.getByRole("button", { name: "Back" })).toBeInTheDocument();
+  });
+
+  it("calls back via keyboard activation", async () => {
     render(<BackRouter />);
 
-    const button = screen.getByRole("button");
+    screen.getByRole("button").focus();
+    await user.keyboard("{Enter}");
 
-    // expect hover
-    await user.hover(button);
-    expect(button).toHaveStyle({ color: "#666666" });
-
-    // expect active
-    await user.pointer({ keys: "[MouseLeft]", target: button });
-    expect(button).toHaveStyle({ color: "#999999" });
+    expect(mockBack).toHaveBeenCalledTimes(1);
   });
 });
