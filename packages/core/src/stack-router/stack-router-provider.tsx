@@ -1,31 +1,44 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { history } from "../history";
 import styled from "@emotion/styled";
-import { keyframes, css } from "@emotion/react";
+import React, { createContext, useContext, useMemo } from "react";
 import { STACK_TRANSITION_MS } from "../constants";
 import { StackDevRoadmap } from "../stack-dev/stack-dev-roadmap";
-import {
-  HistoryAction,
+import type {
+  Activity,
   HistoryState,
-  Direction,
-  DirectionType,
   StackRouterProviderProps,
   VisiblePage,
 } from "../type";
+import StackHeader from "./_components/header";
+import StackPage from "./_components/stack-page";
+import { ActivityContext } from "./activity-context";
+import { getRenderedPages, type StackEntry } from "./stack-reducer";
+import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
+import { useStackBridgeSync } from "./use-stack-bridge-sync";
+import { useStackNavigation } from "./use-stack-navigation";
 
-interface StackRouterContextProps {
+export interface StackRouterContextValue {
   currentPath: string;
+  /** top 엔트리의 history state */
   currentState: HistoryState;
-  Activities: { path: string; element: React.ReactNode }[];
-  initialActivity: { path: string; element: React.ReactNode };
-  push: (path: string, data?: any) => void;
-  replace: (path: string, data?: any) => void;
-  back: () => void;
+  depth: number;
+  canGoBack: boolean;
+  isTransitioning: boolean;
+  entries: StackEntry[];
+  /** 1.x 호환 */
+  visiblePages: VisiblePage[];
+  Activities: Activity[];
+  initialActivity: Activity;
+  push: (path: string, data?: unknown) => boolean;
+  replace: (path: string, data?: unknown) => boolean;
+  reset: (path: string, data?: unknown) => boolean;
+  back: () => boolean;
+  pop: (count?: number) => boolean;
+  popTo: (path: string) => boolean;
+  /** @deprecated 스택과 동기화되지 않는다. 브라우저 forward 는 popstate 로 처리된다 */
   forward: () => void;
-  visiblePages: { path: string; element: React.ReactNode }[];
 }
 
-const StackRouterContext = createContext<StackRouterContextProps | null>(null);
+const StackRouterContext = createContext<StackRouterContextValue | null>(null);
 
 export const useStackRouter = () => {
   const context = useContext(StackRouterContext);
@@ -35,137 +48,121 @@ export const useStackRouter = () => {
   return context;
 };
 
+const isDevEnv = () =>
+  typeof process !== "undefined" && process.env?.NODE_ENV === "development";
+
 const StackRouterProvider = ({
-  maxWidth = "600px",
-  Activities = [],
   initialActivity,
+  Activities = [],
+  maxWidth = "600px",
+  isShowHeader = false,
   enableDevTools,
+  transition = "slide",
+  duration = STACK_TRANSITION_MS,
+  restoreStack = "with-root",
+  safeArea = false,
+  onBackAtRoot,
+  onNotFound,
+  bridge,
 }: StackRouterProviderProps) => {
-  const showDevTools = useMemo(() => {
-    if (enableDevTools !== undefined) return enableDevTools;
-    return typeof process !== "undefined" && process.env?.NODE_ENV === "development";
-  }, [enableDevTools]);
-  const [currentPath, setCurrentPath] = useState(
-    history.getCurrentState().path
-  );
-  const [currentState, setCurrentState] = useState(history.getCurrentState());
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const [direction, setDirection] = useState<DirectionType>(Direction.FORWARD);
-  const [visiblePages, setVisiblePages] = useState<Array<VisiblePage>>([]);
+  const reducedMotion = usePrefersReducedMotion();
+  const effectiveDuration =
+    transition === "none" || reducedMotion ? 0 : duration;
 
-  // initialize visible pages
-  useEffect(() => {
-    setVisiblePages([
-      {
-        path: initialActivity.path,
-        element: initialActivity.element,
-        isEntering: true,
-      },
-    ]);
-  }, [initialActivity]);
-
-  // listen to history changes
-  useEffect(() => {
-    const removeListener = history.addListener((state) => {
-      if (!isTransitioning || direction !== Direction.BACKWARD) {
-        setCurrentPath(state?.path);
-        setCurrentState(state);
-      }
-      setIsTransitioning(true);
-      setDirection(
-        state?.action === HistoryAction.POP
-          ? Direction.BACKWARD
-          : Direction.FORWARD
-      );
-    });
-
-    return () => {
-      removeListener();
-    };
-  }, [isTransitioning, direction]);
-
-  // handle back
-  const handleBack = () => {
-    setIsTransitioning(true);
-    setDirection(Direction.BACKWARD);
-
-    setTimeout(() => {
-      setVisiblePages((prev) => prev.slice(0, -1));
-    }, STACK_TRANSITION_MS);
-    history.back();
-  };
-
-  // update current path
-  useEffect(() => {
-    if (visiblePages.length > 0) {
-      setCurrentPath(visiblePages[visiblePages.length - 1].path);
-    }
-  }, [visiblePages]);
-
-  // handle push
-  const handlePush = (path: string, data?: any) => {
-    setIsTransitioning(true);
-    setDirection(Direction.FORWARD);
-
-    const currentActivity = Activities.find((a) => a.path === path);
-    if (currentActivity) {
-      setVisiblePages((prev) => {
-        const existingIndex = prev.findIndex((a) => a.path === path);
-        if (existingIndex !== -1) {
-          const newActivities = [...prev];
-          const [removed] = newActivities.splice(existingIndex, 1);
-          return [...newActivities, { ...removed, isExiting: true }];
-        }
-        return [
-          ...prev,
-          { path, element: currentActivity.element, isExiting: true },
-        ];
-      });
-      setTimeout(() => {
-        setCurrentPath(path);
-      }, STACK_TRANSITION_MS);
-    }
-
-    history.push(path, data);
-  };
-
-  const value: StackRouterContextProps = {
-    currentPath,
-    currentState,
+  const navigation = useStackNavigation({
     initialActivity,
-    Activities,
-    visiblePages,
-    push: handlePush,
-    replace: history.replace,
-    back: handleBack,
-    forward: history.forward,
-  };
+    activities: Activities,
+    duration: effectiveDuration,
+    restoreStack,
+    onBackAtRoot,
+    onNotFound,
+  });
+  const { state, endTransition } = navigation;
+
+  const elementFor = (pattern: string) =>
+    Activities.find((activity) => activity.path === pattern)?.element ??
+    (initialActivity.path === pattern ? initialActivity.element : null);
+
+  const top = state.entries[state.entries.length - 1];
+
+  const value = useMemo<StackRouterContextValue>(
+    () => ({
+      currentPath: top.path,
+      currentState: {
+        path: top.path,
+        data: top.data,
+        key: top.key,
+        index: state.entries.length - 1,
+      },
+      depth: state.entries.length,
+      canGoBack: state.entries.length > 1,
+      isTransitioning: state.transition !== null,
+      entries: state.entries,
+      visiblePages: state.entries.map((entry) => ({
+        path: entry.path,
+        element: elementFor(entry.pattern),
+      })),
+      Activities,
+      initialActivity,
+      push: navigation.push,
+      replace: navigation.replace,
+      reset: navigation.reset,
+      back: navigation.back,
+      pop: navigation.pop,
+      popTo: navigation.popTo,
+      forward: () => window.history.forward(),
+    }),
+    [state, Activities, initialActivity, navigation]
+  );
+
+  useStackBridgeSync(bridge, value, onBackAtRoot);
+
+  const direction = state.transition?.type ?? "push";
+  const pages = getRenderedPages(state);
+  const showDevTools = enableDevTools ?? isDevEnv();
 
   return (
     <StackRouterContext.Provider value={value}>
-      <LayoutContainer>
-        <Layout maxWidth={maxWidth} as="div" data-testid="layout">
+      <LayoutContainer safeArea={safeArea}>
+        <Layout maxWidth={maxWidth} data-testid="layout">
+          {isShowHeader && <StackHeader />}
           <PageContainer>
-            {visiblePages.map((page, index) => (
-              <PageWrapper
-                key={`${page.path}-${index}`}
-                isTransitioning={isTransitioning}
-                direction={direction}
-                currentPage={index === visiblePages.length - 1}
-                isEntering={page.isEntering}
-                isExiting={page.isExiting}
-                zIndex={index}
+            {pages.map(({ entry, pageState, isTop }, index) => (
+              <ActivityContext.Provider
+                key={entry.key}
+                value={{
+                  key: entry.key,
+                  path: entry.path,
+                  pattern: entry.pattern,
+                  params: entry.params,
+                  query: entry.query,
+                  data: entry.data,
+                  index,
+                  isTop,
+                }}
               >
-                {page.element}
-              </PageWrapper>
+                <StackPage
+                  pageState={pageState}
+                  direction={direction}
+                  transitionType={transition}
+                  duration={effectiveDuration}
+                  zIndex={index}
+                  isTop={isTop}
+                  onAnimationEnd={
+                    pageState === "enter" ? endTransition : undefined
+                  }
+                >
+                  {elementFor(entry.pattern)}
+                </StackPage>
+              </ActivityContext.Provider>
             ))}
           </PageContainer>
         </Layout>
       </LayoutContainer>
       <StackDevRoadmap
         visible={showDevTools}
-        pages={visiblePages.map((p) => ({ path: p.path }))}
-        currentPath={currentPath}
+        pages={state.entries.map((entry) => ({ path: entry.path }))}
+        currentPath={top.path}
       />
     </StackRouterContext.Provider>
   );
@@ -175,133 +172,34 @@ export default StackRouterProvider;
 export { StackRouterProvider };
 
 /**styles */
-const LayoutContainer = styled.div`
+const LayoutContainer = styled.div<{ safeArea: boolean }>`
   width: 100%;
   height: 100vh;
+  height: 100dvh;
   display: flex;
   justify-content: center;
-  background: white;
+  background: var(--wvk-page-bg, #ffffff);
+  box-sizing: border-box;
+  ${({ safeArea }) =>
+    safeArea
+      ? `padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);`
+      : ""}
 `;
 
 const Layout = styled.div<{ maxWidth: string }>`
   width: 100%;
   max-width: ${({ maxWidth }) => maxWidth};
   height: 100%;
+  display: flex;
+  flex-direction: column;
   position: relative;
   overflow: hidden;
 `;
 
 const PageContainer = styled.div`
   position: relative;
+  flex: 1;
   width: 100%;
-  height: 100%;
   overflow: hidden;
-  background: white;
-`;
-
-const slideInRight = keyframes`
-  from {
-    transform: translateX(100%);
-    opacity: 0.2;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-`;
-
-const slideOutLeft = keyframes`
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-30%);
-    opacity: 0.2;
-  }
-`;
-
-const slideInLeft = keyframes`
-  from {
-    transform: translateX(-30%);
-    opacity: 0.2;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-`;
-
-const slideOutRight = keyframes`
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0.2;
-  }
-`;
-
-const PageWrapper = styled.div<{
-  isTransitioning: boolean;
-  direction: "forward" | "backward";
-  currentPage: boolean;
-  isEntering?: boolean;
-  isExiting?: boolean;
-  zIndex: number;
-}>`
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: white;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-  -webkit-tap-highlight-color: transparent;
-  z-index: ${({ zIndex }) => zIndex};
-  will-change: transform, opacity;
-  transform: translate3d(0, 0, 0);
-  animation: ${({
-    isTransitioning,
-    direction,
-    currentPage,
-    isEntering,
-    isExiting,
-  }) => {
-    if (!isTransitioning) return "none";
-
-    if (direction === "forward") {
-      if (isExiting) {
-        return css`
-          ${slideInRight} ${STACK_TRANSITION_MS}ms ease-in-out forwards
-        `;
-      }
-      if (isEntering) {
-        return css`
-          ${slideOutLeft} ${STACK_TRANSITION_MS}ms ease-in-out forwards
-        `;
-      }
-    } else {
-      if (isExiting) {
-        return css`
-          ${slideOutRight} ${STACK_TRANSITION_MS}ms ease-in-out forwards
-        `;
-      }
-      if (isEntering) {
-        return css`
-          ${slideInLeft} ${STACK_TRANSITION_MS}ms ease-in-out forwards
-        `;
-      }
-    }
-    return "none";
-  }};
-  animation-fill-mode: forwards;
-
-  &:active {
-    cursor: grabbing;
-  }
 `;

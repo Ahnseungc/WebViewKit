@@ -1,26 +1,20 @@
-import React, { useState, useEffect } from "react";
 import styled from "@emotion/styled";
-import BackRouter from "./back-router";
+import React from "react";
 import { useStackRouter } from "../stack-router-provider";
-import { STACK_TRANSITION_MS } from "../../constants";
+import BackRouter from "./back-router";
 
-const Header = () => {
-  const { currentPath, visiblePages } = useStackRouter();
-  const [displayPath, setDisplayPath] = useState(currentPath);
-  const [isVisible, setIsVisible] = useState(visiblePages.length > 1);
+interface StackHeaderProps {
+  /** 기본: 현재 path */
+  title?: React.ReactNode;
+}
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDisplayPath(currentPath);
-      setIsVisible(visiblePages.length > 1);
-    }, STACK_TRANSITION_MS);
-    return () => clearTimeout(timer);
-  }, [currentPath, visiblePages]);
+const Header = ({ title }: StackHeaderProps) => {
+  const { currentPath, canGoBack } = useStackRouter();
 
   return (
     <StyledHeader>
-      {isVisible && <BackRouter />}
-      <StyledTitle>{displayPath}</StyledTitle>
+      {canGoBack && <BackRouter />}
+      <StyledTitle>{title ?? currentPath}</StyledTitle>
     </StyledHeader>
   );
 };
@@ -32,17 +26,20 @@ const Header = () => {
 const StyledHeader = styled.header`
   width: 100%;
   height: 64px;
-  background-color: white;
-  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  background-color: var(--wvk-header-bg, #ffffff);
+  border-bottom: 1px solid var(--wvk-header-border, #e5e7eb);
   display: flex;
   align-items: center;
   padding: 0 1rem;
 `;
 
 const StyledTitle = styled.h1`
+  margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  color: #111827;
+  color: var(--wvk-header-color, #111827);
 `;
 
 export default Header;

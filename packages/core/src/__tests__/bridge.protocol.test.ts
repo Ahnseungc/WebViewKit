@@ -1,12 +1,13 @@
 import {
   BRIDGE_NAMESPACE,
   BRIDGE_PROTOCOL_VERSION,
-  STACK_BRIDGE_METHODS,
   createBridgeEnvelope,
   isBridgeEnvelope,
   parseBridgeMessage,
   serializeBridgeMessage,
+  STACK_BRIDGE_METHODS,
 } from "../bridge/protocol";
+import { isSafeStackUrl } from "../bridge/url-policy";
 
 describe("bridge protocol", () => {
   it("creates a valid envelope", () => {
@@ -30,6 +31,22 @@ describe("bridge protocol", () => {
   it("rejects invalid payloads", () => {
     expect(parseBridgeMessage("{ not json")).toBeNull();
     expect(parseBridgeMessage({ foo: 1 })).toBeNull();
-    expect(parseBridgeMessage({ v: 2, ns: BRIDGE_NAMESPACE, id: "a", method: "x" })).toBeNull();
+    expect(
+      parseBridgeMessage({ v: 2, ns: BRIDGE_NAMESPACE, id: "a", method: "x" })
+    ).toBeNull();
+  });
+});
+
+describe("isSafeStackUrl", () => {
+  it.each([
+    ["/a/b?x=1", true],
+    [`${window.location.origin}/a`, true],
+    ["//evil.example", false],
+    ["javascript:alert(1)", false],
+    ["data:text/html,hi", false],
+    ["https://evil.example/a", false],
+    ["relative/path", false],
+  ])("%s → %s", (url, expected) => {
+    expect(isSafeStackUrl(url)).toBe(expected);
   });
 });

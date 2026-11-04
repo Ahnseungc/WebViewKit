@@ -17,10 +17,36 @@ WebViewKit은 **React Native**·**Flutter** WebView와 동일한 JSON 프로토�
 
 | `method` | `payload` | 방향 |
 |----------|-----------|------|
-| `stack.push` | `{ url, meta? }` | web → native |
-| `stack.replace` | `{ url, meta? }` | web → native |
-| `stack.pop` | (없음) | web → native |
-| `stack.reset` | `{ url, meta? }` | web → native |
+| `stack.push` | `{ url, meta? }` | 양방향 |
+| `stack.replace` | `{ url, meta? }` | 양방향 |
+| `stack.pop` | (없음) | 양방향 |
+| `stack.reset` | `{ url, meta? }` | 양방향 |
+| `stack.changed` | `{ depth, path }` | web → native (2.0) |
+| `back.request` | (없음) | native → web (2.0), 응답 `{ handled }` |
+| `bridge.response` | 요청별 | 응답. `replyTo` = 원 요청 `id` (2.0) |
+
+### 응답 (2.0)
+
+```json
+{ "v": 1, "ns": "webviewkit", "id": "…", "method": "bridge.response",
+  "replyTo": "<요청 id>", "payload": { "handled": true } }
+```
+
+실패 시 `error: { code, message }` 를 붙입니다.
+
+| code | 의미 |
+|------|------|
+| `TIMEOUT` | 응답 시간 초과 |
+| `BRIDGE_UNAVAILABLE` | 호스트 미감지·미준비 |
+| `INVALID_PAYLOAD` | `url` 이 비어 있거나 문자열이 아님 |
+| `URL_NOT_ALLOWED` | URL 정책 위반 (기본: 같은 origin 경로만) |
+| `UNKNOWN_METHOD` | 핸들러 없음 |
+| `HANDLER_ERROR` | 핸들러 예외 |
+
+- `back.request` 에는 웹이 **항상** 회신합니다. `handled: false` 면 웹 스택이 루트라는 뜻이므로 네이티브가 앱 종료·WebView 닫기를 처리합니다.
+- 다른 요청은 `installBridgeHost({ replyToNative: true })` 일 때만 회신합니다.
+- RN 에서 web → native 요청의 응답을 받으려면 `client.request(method, payload, { expectResponse: true })` 로 보내고, 네이티브는 위 형식으로 `injectJavaScript` → `window.webviewkitBridge.postMessage(...)` 합니다.
+- Flutter 는 `callHandler` 반환값이 그대로 `result` 가 됩니다.
 
 ## Web (Next.js / React)
 

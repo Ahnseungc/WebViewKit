@@ -1,150 +1,104 @@
+import { BACK_TIMEOUT_MS } from "../constants";
 import { history } from "../history";
-import { HistoryState } from "../type";
+import { HistoryAction } from "../type";
 
-// mocking window.history
-const mockHistory = {
-  state: null as HistoryState | null,
-  pushState: jest.fn(),
-  replaceState: jest.fn(),
-  back: jest.fn(),
-  forward: jest.fn(),
-  go: jest.fn(),
-};
-
-// mocking window.location
-const mockLocation = {
-  pathname: "/",
-};
-
-// mocking global window
-Object.defineProperty(window, "history", {
-  value: mockHistory,
-  writable: true,
-});
-
-Object.defineProperty(window, "location", {
-  value: mockLocation,
-  writable: true,
-});
+const nextPopState = () =>
+  new Promise<void>((resolve) =>
+    window.addEventListener("popstate", () => resolve(), { once: true })
+  );
 
 describe("history", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockHistory.state = null;
-    mockLocation.pathname = "/";
+    window.history.replaceState(null, "", "/");
   });
 
-  describe("push", () => {
-    it("should push new history entry", () => {
-      const path = "/test";
-      const data = { title: "Test" };
-      history.push(path, data);
+  it("push 는 state 에 path·action·key·index 를 기록한다", () => {
+    history.push("/detail?id=1", { key: "k1", index: 1, data: { a: 1 } });
 
-      expect(mockHistory.pushState).toHaveBeenCalledWith(
-        { path, data, action: "PUSH" },
-        "",
-        path
-      );
-    });
-  });
-
-  describe("replace", () => {
-    it("should replace current history entry", () => {
-      const path = "/test";
-      const data = { title: "Test" };
-      history.replace(path, data);
-
-      expect(mockHistory.replaceState).toHaveBeenCalledWith(
-        { path, data, action: "REPLACE" },
-        "",
-        path
-      );
+    expect(window.location.pathname + window.location.search).toBe(
+      "/detail?id=1"
+    );
+    expect(window.history.state).toEqual({
+      key: "k1",
+      index: 1,
+      data: { a: 1 },
+      path: "/detail?id=1",
+      action: HistoryAction.PUSH,
     });
   });
 
-  describe("navigation methods", () => {
-    it("should call history.back()", () => {
-      history.back();
-      expect(mockHistory.back).toHaveBeenCalled();
-    });
-    it("should call history.forward()", () => {
-      history.forward();
-      expect(mockHistory.forward).toHaveBeenCalled();
-    });
+  it("replace 는 현재 엔트리를 교체한다", () => {
+    const length = window.history.length;
+    history.replace("/replaced", { key: "k2", index: 0 });
 
-    it("should call history.go()", () => {
-      const delta = 2;
-      history.go(delta);
-      expect(mockHistory.go).toHaveBeenCalledWith(delta);
-    });
+    expect(window.history.length).toBe(length);
+    expect(window.history.state.action).toBe(HistoryAction.REPLACE);
   });
 
-  describe("getCurrentState", () => {
-    it("should return current state", () => {
-      const mockState: HistoryState = {
-        path: "/test",
-        data: { title: "Test" },
-      };
+  it("push·replace 는 리스너를 호출하지 않는다", () => {
+    const listener = jest.fn();
+    const remove = history.addListener(listener);
 
-      mockHistory.state = mockState;
+    history.push("/a");
+    history.replace("/b");
 
-      const state = history.getCurrentState();
-      expect(state).toEqual(mockState);
-    });
-
-    it("should return default state when history.state is null", () => {
-      mockHistory.state = null;
-      mockLocation.pathname = "/default";
-
-      const state = history.getCurrentState();
-
-      expect(state).toEqual({ path: "/default" });
-    });
+    expect(listener).not.toHaveBeenCalled();
+    remove();
   });
 
-  describe("addListener", () => {
-    it("should add and remove listener", () => {
-      const listener = jest.fn();
+  it("popstate 는 리스너에 POP 으로 한 번만 전달된다", async () => {
+    const listener = jest.fn();
+    const remove = history.addListener(listener);
+    history.push("/a", { key: "a", index: 1 });
 
-      const removeListener = history.addListener(listener);
+    const popped = await history.back();
 
-      const testState: HistoryState = {
-        path: "/test",
-      };
-      const popStateEvent = new PopStateEvent("popstate", {
-        state: testState,
-      });
-      window.dispatchEvent(popStateEvent);
-      expect(listener).toHaveBeenCalledWith(testState);
+    expect(popped).toBe(true);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener.mock.calls[0][0].action).toBe(HistoryAction.POP);
+    remove();
+  });
 
-      // Delete listener
-      removeListener();
+  it("같은 리스너를 두 번 등록해도 한 번만 호출된다", async () => {
+    const listener = jest.fn();
+    const removeA = history.addListener(listener);
+    const removeB = history.addListener(listener);
+    history.push("/a");
 
-      // change state and dispatch event
-      const newState: HistoryState = { path: "/new" };
-      const newPopStateEvent = new PopStateEvent("popstate", {
-        state: newState,
-      });
-      window.dispatchEvent(newPopStateEvent);
+    const popped = nextPopState();
+    window.history.back();
+    await popped;
 
-      // listener should not be called anymore
-      expect(listener).toHaveBeenCalledTimes(1);
-    });
+    expect(listener).toHaveBeenCalledTimes(1);
+    removeA();
+    removeB();
+  });
 
-    it("should not add duplicate listener", () => {
-      const listener = jest.fn();
+  it("해제한 리스너는 더 이상 호출되지 않는다", async () => {
+    const listener = jest.fn();
+    history.addListener(listener)();
+    history.push("/a");
 
-      // add listener twice
-      history.addListener(listener);
-      history.addListener(listener);
+    await history.back();
 
-      // change state and dispatch event
-      const testState: HistoryState = { path: "/test" };
-      const popStateEvent = new PopStateEvent("popstate", { state: testState });
-      window.dispatchEvent(popStateEvent);
+    expect(listener).not.toHaveBeenCalled();
+  });
 
-      // listener should be called only once
-      expect(listener).toHaveBeenCalledTimes(1);
-    });
+  it("popstate 가 오지 않으면 BACK_TIMEOUT_MS 뒤 false 로 끝난다", async () => {
+    jest.useFakeTimers();
+    const spy = jest.spyOn(window.history, "go").mockImplementation(() => {});
+
+    const result = history.back();
+    jest.advanceTimersByTime(BACK_TIMEOUT_MS);
+
+    await expect(result).resolves.toBe(false);
+    spy.mockRestore();
+    jest.useRealTimers();
+  });
+
+  it("state 가 없으면 현재 pathname+search 를 반환한다", () => {
+    window.history.replaceState(null, "", "/plain?x=1");
+
+    expect(history.getCurrentState()).toEqual({ path: "/plain?x=1" });
   });
 });

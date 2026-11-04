@@ -1,13 +1,11 @@
 {
   "name": "@webviewkit/browser",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "WebViewKit demo (Vite)",
   "scripts": {
     "dev": "vite",
-    "preview": "vite preview",
-    "build": "tsup",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
@@ -29,5 +27,11 @@
     "vite": "^6.3.5",
     "vitest": "^1.6.0"
   },
-  "packageManager": "pnpm@10.7.0"
+  "packageManager": "pnpm@10.7.0",
+  "private": true,
+  "dependencies": {
+    "@ahnseungchan/webviewkit": "workspace:*",
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0"
+  }
 }

@@ -1,8 +1,17 @@
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react({ jsxImportSource: "@emotion/react" })],
+  resolve: {
+    alias: {
+      // 데모는 빌드 없이 core 소스를 바로 사용
+      "@ahnseungchan/webviewkit": fileURLToPath(
+        new URL("../core/src/index.ts", import.meta.url)
+      ),
+    },
+  },
   server: {
     port: 3000,
     open: true,

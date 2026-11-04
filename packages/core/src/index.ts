@@ -1,64 +1,34 @@
-export { STACK_TRANSITION_MS } from "./constants";
-export { Direction, HistoryAction } from "./type";
-export type {
-  StackRouterProviderProps,
-  VisiblePage,
-  HistoryState,
-  HistoryListener,
-  DirectionType,
-} from "./type";
-
-export { history } from "./history";
+export * from "./bridge";
 export {
+  BACK_TIMEOUT_MS,
+  BRIDGE_TIMEOUT_MS,
+  STACK_TRANSITION_MS,
+} from "./constants";
+export { history } from "./history";
+export { StackDevRoadmap } from "./stack-dev/stack-dev-roadmap";
+export { default as BackRouter } from "./stack-router/_components/back-router";
+export { default as StackHeader } from "./stack-router/_components/header";
+export {
+  type ActivityContextValue,
+  useActivity,
+  useParams,
+} from "./stack-router/activity-context";
+export { findActivity, matchPath, parseQuery } from "./stack-router/match-path";
+export type { StackEntry } from "./stack-router/stack-reducer";
+export {
+  type StackRouterContextValue,
   default as StackRouterProvider,
   useStackRouter,
 } from "./stack-router/stack-router-provider";
-export { default as BackRouter } from "./stack-router/_components/back-router";
-export { default as StackHeader } from "./stack-router/_components/header";
-export { StackDevRoadmap } from "./stack-dev/stack-dev-roadmap";
-
-export {
-  BRIDGE_PROTOCOL_VERSION,
-  BRIDGE_NAMESPACE,
-  STACK_BRIDGE_METHODS,
-  FLUTTER_LEGACY_STACK_HANDLERS,
-  FLUTTER_UNIFIED_HANDLER,
-  RN_BRIDGE_HANDLER,
-  createBridgeId,
-  createBridgeEnvelope,
-  isBridgeEnvelope,
-  parseBridgeMessage,
-  serializeBridgeMessage,
-  detectBridgeHost,
-  isNativeBridgeHost,
-  createBridgeTransport,
-  WebViewBridgeClient,
-  createWebViewBridgeClient,
-  installBridgeHost,
-  handleBridgeMessage,
-  emitBridgeEnvelope,
-  createStackRouterBridge,
-  getStackRouterBridge,
-  installStackRouterBridge,
-  WebViewBridgeProvider,
-} from "./bridge";
-
+export type { StackBridgeSyncOptions } from "./stack-router/use-stack-bridge-sync";
 export type {
-  BridgeHostKind,
-  StackBridgeMethod,
-  StackMeta,
-  StackPushPayload,
-  StackReplacePayload,
-  StackResetPayload,
-  BridgeEnvelope,
-  BridgeErrorBody,
-  BridgeTransport,
-  BridgeTransportOptions,
-  WebViewBridgeClientOptions,
-  InstallBridgeHostOptions,
-  StackRouterHostHandlers,
-  BridgeHostCleanup,
-  StackRouterBridge,
-  CreateStackRouterBridgeOptions,
-  WebViewBridgeProviderProps,
-} from "./bridge";
+  Activity,
+  DirectionType,
+  HistoryListener,
+  HistoryState,
+  RestoreStackPolicy,
+  StackRouterProviderProps,
+  StackTransitionType,
+  VisiblePage,
+} from "./type";
+export { Direction, HistoryAction } from "./type";
