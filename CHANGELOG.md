@@ -2,7 +2,7 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
-## [Unreleased]
+## [2.1.0] - 2026-11-04
 
 ### Changed
 
