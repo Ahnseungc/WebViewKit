@@ -1,5 +1,8 @@
-/** push/back 전환 기본 시간 (ms). `StackRouterProvider` `duration` 으로 조정 */
-export const STACK_TRANSITION_MS = 300;
+/**
+ * push/back 전환 기본 시간 (ms). iOS 네비게이션 전환 체감에 맞춘 값.
+ * `StackRouterProvider` `duration` 으로 조정
+ */
+export const STACK_TRANSITION_MS = 500;
 
 /** 전환 종료 안전 타이머 여유 (animationend 누락 대비) */
 export const TRANSITION_END_GRACE_MS = 50;

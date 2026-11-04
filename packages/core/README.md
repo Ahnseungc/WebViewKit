@@ -63,8 +63,8 @@ export default function App() {
 |------|------|------|
 | `initialActivity` | — | 루트 페이지. 마운트 시 1회만 읽음 |
 | `Activities` | `[]` | `{ path, element }[]`. path 에 `:param` 사용 가능 |
-| `transition` | `"slide"` | `"slide"` · `"fade"` · `"none"` |
-| `duration` | `300` | 전환 ms |
+| `transition` | `"slide"` | `"slide"`(iOS 네이티브 스택: 패럴랙스·dim·가장자리 그림자) · `"fade"` · `"none"` |
+| `duration` | `500` | 전환 ms |
 | `restoreStack` | `"with-root"` | 딥링크 복원 정책 |
 | `onBackAtRoot` / `onNotFound` | — | 콜백 |
 | `isShowHeader` | `false` | `StackHeader` 렌더 |
@@ -81,7 +81,7 @@ export default function App() {
 | `useActivity()` | 현재 페이지의 `{ key, path, pattern, params, query, data, index, isTop }` |
 | `useParams()` | `params` |
 
-테마는 CSS 변수로 바꿉니다: `--wvk-page-bg`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.
+테마는 CSS 변수로 바꿉니다: `--wvk-page-bg`, `--wvk-dim-color`, `--wvk-edge-shadow`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.
 
 ## Native Bridge
 
