@@ -154,13 +154,11 @@ export function useStackNavigation(
     const delta = Math.min(Math.max(1, count), entries.length - 1);
     const targetIndex = entries.length - 1 - delta;
     busyRef.current = true;
-    void history.travel(-delta).then((popped) => {
-      // popstate 가 오지 않는 환경(히스토리 불일치) — 로컬 스택만 맞춘다
-      if (!popped) {
-        busyRef.current = false;
-        dispatch({ type: "POP_TO", index: targetIndex, animate: false });
-      }
-    });
+    // push 와 같이 클릭 tick 에서 바로 전환을 시작한다. popstate 를 기다리면
+    // 브라우저가 history traversal 동안 프레임을 늦춰 애니메이션이 시작되지 않는다.
+    // 뒤따르는 popstate 는 key 가 이미 top 이라 onPop 에서 no-op 이 된다.
+    dispatch({ type: "POP_TO", index: targetIndex, animate: animate() });
+    void history.travel(-delta);
     return true;
   }, []);
 

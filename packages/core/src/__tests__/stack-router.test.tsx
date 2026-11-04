@@ -140,6 +140,20 @@ describe("StackRouterProvider", () => {
     expect(window.location.pathname).toBe("/p2");
   });
 
+  it("back 은 popstate 를 기다리지 않고 클릭 즉시 pop 전환을 시작한다", async () => {
+    renderRouter();
+    await pushAndSettle("/p2");
+    const go = jest.spyOn(window.history, "go").mockImplementation(() => {});
+
+    act(() => {
+      router.back();
+    });
+
+    expect(pageStates()).toEqual(["p1:enter", "p2:exit"]);
+    go.mockRestore();
+    await settle();
+  });
+
   it("전환이 끝나면 top 이 아닌 페이지는 covered (E-02)", async () => {
     renderRouter();
     await pushAndSettle("/p2");
