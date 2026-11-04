@@ -103,8 +103,8 @@ interface StackState {
 
 | data-state | 조건 | 스타일 |
 |------------|------|--------|
-| `enter` | push의 새 top / pop의 새 top | push: `slideInRight`, pop: `slideInLeft` |
-| `exit` | push의 이전 top / pop의 leaving | push: `slideOutLeft`, pop: `slideOutRight` |
+| `enter` | push의 새 top / pop의 새 top | push: 100%→0 + 그림자, pop: -30%→0 + dim 1→0 |
+| `exit` | push의 이전 top / pop의 leaving | push: 0→-30% + dim 0→1, pop: 0→100% + 그림자 |
 | `idle` | 현재 top, 전환 없음 | 애니메이션 없음 |
 | `covered` | top이 아니고 전환 대상도 아님 | `visibility: hidden` |
 
@@ -175,7 +175,7 @@ interface StackRouterProviderProps {
 }
 ```
 
-`STACK_TRANSITION_MS`는 300으로 바꾼다(네이티브 iOS push와 비슷한 체감).
+`STACK_TRANSITION_MS`는 500이다. `slide`는 iOS UINavigationController를 따른다: 감속 곡선 `cubic-bezier(0.32, 0.72, 0, 1)`, 아래 페이지 -30% 패럴랙스 + 검은 dim(`::after`), 위 페이지 왼쪽 가장자리 그림자. 페이지 자체 opacity는 바꾸지 않는다.
 
 ---
 

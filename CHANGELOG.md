@@ -2,6 +2,18 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
+## [Unreleased]
+
+### Changed
+
+- `transition="slide"` 를 iOS 네이티브 스택 전환에 맞춤: 감속 곡선 `cubic-bezier(0.32, 0.72, 0, 1)`, 아래 페이지 -30% 패럴랙스 + 검은 dim 레이어(투명도 변화 제거), 위 페이지 왼쪽 가장자리 그림자
+- `STACK_TRANSITION_MS` 300 → 500
+- CSS 변수 `--wvk-dim-color`, `--wvk-edge-shadow` 추가
+
+### Fixed
+
+- back 전환을 popstate 를 기다리지 않고 클릭 즉시 시작 (popstate 가 늦는 WebView 에서 슬라이드 지연)
+
 ## [2.0.0] - 2026-11-04
 
 스택 라우터 재구현 · 브릿지 신뢰성 강화 · 배포 정비. 설계: `docs/specs/webviewkit-v2/spec.md`, 근거: `docs/prd/webviewkit-v2-prd.md`.
