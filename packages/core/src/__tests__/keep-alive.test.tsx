@@ -112,6 +112,27 @@ beforeEach(() => {
 });
 
 describe("keepAlive 되살리기", () => {
+  it("되살린 keepAlive 페이지는 DOM 위치·노드·scrollTop 이 유지된다", async () => {
+    renderRouter();
+    await go(() => router.push("/list"));
+    const layout = screen.getByTestId("layout");
+    const wrappers = () => Array.from(layout.querySelectorAll("[data-state]"));
+    const listWrapper = screen.getByTestId("list").parentElement as HTMLElement;
+    const indexBefore = wrappers().indexOf(listWrapper);
+    listWrapper.scrollTop = 234;
+
+    await go(() => router.back());
+    // 보관 중에도 DOM 형제 순서가 바뀌지 않아야 한다 (이동 시 scrollTop 초기화)
+    expect(wrappers().indexOf(listWrapper)).toBe(indexBefore);
+
+    await go(() => router.push("/list"));
+
+    const revived = screen.getByTestId("list").parentElement as HTMLElement;
+    expect(revived).toBe(listWrapper);
+    expect(wrappers().indexOf(revived)).toBe(indexBefore);
+    expect(revived.scrollTop).toBe(234);
+  });
+
   it("keepAlive 페이지는 back 후 다시 push 하면 state 가 유지된다", async () => {
     renderRouter();
     await go(() => router.push("/list"));

@@ -153,6 +153,23 @@ const StackRouterProvider = ({
   };
   const mountedCount = pages.filter(shouldMount).length;
 
+  // DOM 이동은 스크롤 위치를 초기화하므로 key 의 최초 렌더 순서로 DOM 순서를 고정한다.
+  // 쌓임 순서는 getRenderedPages 위치(zIndex)로 표현한다.
+  const domOrderRef = useRef<string[]>([]);
+  const currentKeys = new Set(pages.map((page) => page.entry.key));
+  const knownKeys = new Set(domOrderRef.current);
+  domOrderRef.current = [
+    ...domOrderRef.current.filter((key) => currentKeys.has(key)),
+    ...pages.map((page) => page.entry.key).filter((key) => !knownKeys.has(key)),
+  ];
+  const domOrder = domOrderRef.current;
+  const domPages = pages
+    .map((page, index) => ({ page, index }))
+    .sort(
+      (a, b) =>
+        domOrder.indexOf(a.page.entry.key) - domOrder.indexOf(b.page.entry.key)
+    );
+
   const hasWarnedRef = useRef(false);
   useEffect(() => {
     if (
@@ -175,7 +192,7 @@ const StackRouterProvider = ({
       <LayoutContainer safeArea={safeArea}>
         <Layout maxWidth={maxWidth} data-testid="layout">
           <PageContainer>
-            {pages.map((page, index) => {
+            {domPages.map(({ page, index }) => {
               const { entry, pageState, isTop } = page;
               return (
                 <ActivityContext.Provider
