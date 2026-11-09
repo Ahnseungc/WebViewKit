@@ -17,6 +17,8 @@ export interface StackRouterProviderProps {
   maxWidth?: string;
   /** true면 상단에 `StackHeader` 렌더 */
   isShowHeader?: boolean;
+  /** 페이지 전환에 맞춰 헤더 제목·back 버튼을 전환 (기본 true) */
+  headerTransition?: boolean;
   /** 개발 시 스택 로드맵 오버레이 (기본: NODE_ENV === "development") */
   enableDevTools?: boolean;
   transition?: StackTransitionType;

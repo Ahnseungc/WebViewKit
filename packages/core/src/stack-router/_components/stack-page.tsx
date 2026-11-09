@@ -12,7 +12,7 @@ type Direction = "push" | "pop";
  * - 아래 페이지: 0 ↔ -30% 패럴랙스, 투명도 대신 검은 dim 레이어
  * - 곡선: 빠르게 출발해 천천히 멈추는 iOS 기본 감속 곡선
  */
-const IOS_EASING = "cubic-bezier(0.32, 0.72, 0, 1)";
+export const IOS_EASING = "cubic-bezier(0.32, 0.72, 0, 1)";
 const FADE_EASING = "ease";
 const PARALLAX_OFFSET = "-30%";
 

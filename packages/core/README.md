@@ -68,6 +68,7 @@ export default function App() {
 | `restoreStack` | `"with-root"` | 딥링크 복원 정책 |
 | `onBackAtRoot` / `onNotFound` | — | 콜백 |
 | `isShowHeader` | `false` | `StackHeader` 렌더 |
+| `headerTransition` | `true` | 페이지 전환에 맞춰 헤더 제목·back 버튼 전환 (`transition` 따름, `none`·reduced motion 이면 즉시) |
 | `safeArea` | `false` | `env(safe-area-inset-*)` padding |
 | `maxWidth` | `"600px"` | 본문 최대 폭 |
 | `enableDevTools` | dev 에서 true | 스택 로드맵 오버레이 |
