@@ -39,9 +39,11 @@ export interface StackNavigation {
 const isDev = () =>
   typeof process !== "undefined" && process.env?.NODE_ENV !== "production";
 
+/** cacheLimit 이 0 이면 keepAlive 라우트도 일반 엔트리로 만든다 (기능 끔) */
 function createEntry(
   hit: { activity: Activity; match: PathMatch },
   path: string,
+  cacheLimit: number,
   data?: unknown,
   key: string = createBridgeId()
 ): StackEntry {
@@ -52,7 +54,7 @@ function createEntry(
     params: hit.match.params,
     query: hit.match.query,
     data,
-    keepAlive: hit.activity.keepAlive === true,
+    keepAlive: hit.activity.keepAlive === true && cacheLimit > 0,
   };
 }
 
@@ -67,16 +69,25 @@ export function useStackNavigation(
 
   const [state, dispatch] = useReducer(stackReducer, undefined, () => {
     const { initialActivity } = options;
+    const cacheLimit = options.keepAliveLimit ?? KEEP_ALIVE_LIMIT;
     return createStackState(
       createEntry(
         { activity: initialActivity, match: { params: {}, query: {} } },
-        initialActivity.path
+        initialActivity.path,
+        cacheLimit
       ),
-      options.keepAliveLimit ?? KEEP_ALIVE_LIMIT
+      cacheLimit
     );
   });
   const stateRef = useRef(state);
   stateRef.current = state;
+  // keepAliveLimit 은 마운트 시 1회만 읽는다 (state.cacheLimit)
+  const newEntry = (
+    hit: { activity: Activity; match: PathMatch },
+    path: string,
+    data?: unknown,
+    key?: string
+  ) => createEntry(hit, path, stateRef.current.cacheLimit, data, key);
 
   // 전환 중 입력 잠금 (같은 tick 연타까지 막기 위해 ref)
   const busyRef = useRef(false);
@@ -126,9 +137,7 @@ export function useStackNavigation(
       if (!hit) return false;
       const { entries } = stateRef.current;
       const revived = findRevivable(stateRef.current, path);
-      const entry = revived
-        ? { ...revived, data }
-        : createEntry(hit, path, data);
+      const entry = revived ? { ...revived, data } : newEntry(hit, path, data);
       busyRef.current = true;
       history.push(path, { key: entry.key, index: entries.length, data });
       dispatch(
@@ -152,7 +161,7 @@ export function useStackNavigation(
       if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
-      const entry = createEntry(hit, path, data);
+      const entry = newEntry(hit, path, data);
       history.replace(path, {
         key: entry.key,
         index: stateRef.current.entries.length - 1,
@@ -169,7 +178,7 @@ export function useStackNavigation(
       if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
-      const entry = createEntry(hit, path, data);
+      const entry = newEntry(hit, path, data);
       const depth = stateRef.current.entries.length;
       dispatch({ type: "RESET", entry });
       // 현재 항목만 replace 하면 지운 페이지들이 history 에 남아 브라우저 back 으로 되살아난다
@@ -195,7 +204,7 @@ export function useStackNavigation(
       });
       const entry = revivable
         ? { ...revivable, data }
-        : createEntry(hit, path, data);
+        : newEntry(hit, path, data);
       busyRef.current = true;
       dispatch({ type: "RESET_PUSH", entry, animate: animate() });
       // 루트로 되감은 뒤 push 해야 앞으로 가기 기록까지 정리된다
@@ -286,7 +295,7 @@ export function useStackNavigation(
         busyRef.current = false;
         return;
       }
-      const entry = createEntry(
+      const entry = newEntry(
         hit,
         historyState.path,
         historyState.data,
@@ -323,7 +332,7 @@ export function useStackNavigation(
     }
 
     const savedData = (history.getCurrentState() as HistoryState).data;
-    const top = createEntry(hit, url, savedData);
+    const top = newEntry(hit, url, savedData);
     if (optionsRef.current.restoreStack === "top-only") {
       history.replace(url, { key: top.key, index: 0, data: savedData });
       dispatch({ type: "RESTORE", entries: [top] });

@@ -312,6 +312,30 @@ describe("keepAlive 되살리기", () => {
   });
 });
 
+describe("keepAliveLimit 0 은 기능을 끈다", () => {
+  it("resetPush 대상이 스택 안 keepAlive 라우트여도 새로 마운트한다", async () => {
+    renderRouter(0);
+    await go(() => router.push("/list"));
+    click("list", 2);
+    await go(() => router.push("/plain"));
+
+    await go(() => router.resetPush("/list"));
+
+    expect(count("list")).toBe("0");
+    await expectConsistent(["/p1", "/list"]);
+  });
+
+  it("maxMountedPages 는 keepAlive 라우트 페이지도 일반 페이지처럼 언마운트한다", async () => {
+    renderRouter(0, 1);
+    await go(() => router.push("/list"));
+    await go(() => router.push("/n1"));
+    await go(() => router.push("/n2"));
+
+    expect(screen.queryByTestId("list")).toBeNull();
+    expect(screen.getByTestId("n2")).toBeTruthy();
+  });
+});
+
 describe("보관 페이지 렌더", () => {
   it("보관 중 페이지는 cached 상태이고 inert·aria-hidden 이다", async () => {
     renderRouter();
