@@ -7,6 +7,8 @@ export interface StackEntry {
   params: Record<string, string>;
   query: Record<string, string>;
   data?: unknown;
+  /** true 면 스택에서 빠져도 보관 목록(cached)에 남긴다 */
+  keepAlive?: boolean;
 }
 
 export type StackTransition =
@@ -19,6 +21,10 @@ export interface StackState {
   /** pop 애니메이션 중인 엔트리. END_TRANSITION 에서 제거 */
   leaving: StackEntry[];
   transition: StackTransition;
+  /** 스택에서 빠졌지만 살려 둔 keepAlive 엔트리 (오래된 → 최근) */
+  cached: StackEntry[];
+  /** 스택 안 keepAlive 엔트리를 포함한 최대 보관 수. 0 이면 보관 안 함 */
+  cacheLimit: number;
 }
 
 export type StackAction =
@@ -32,8 +38,31 @@ export type StackAction =
 
 const topOf = (entries: StackEntry[]) => entries[entries.length - 1];
 
-export function createStackState(entry: StackEntry): StackState {
-  return { entries: [entry], leaving: [], transition: null };
+export function createStackState(
+  entry: StackEntry,
+  cacheLimit = 0
+): StackState {
+  return {
+    entries: [entry],
+    leaving: [],
+    transition: null,
+    cached: [],
+    cacheLimit,
+  };
+}
+
+/** 스택에서 빠진 keepAlive 엔트리를 보관 목록 뒤에 붙인 새 목록 */
+function cacheEntries(state: StackState, removed: StackEntry[]): StackEntry[] {
+  const { entries, cached, cacheLimit } = state;
+  const incoming = removed.filter((entry) => entry.keepAlive);
+  if (cacheLimit <= 0 || incoming.length === 0) return cached;
+  const incomingPaths = new Set(incoming.map((entry) => entry.path));
+  const merged = [
+    ...cached.filter((entry) => !incomingPaths.has(entry.path)),
+    ...incoming,
+  ];
+  const capacity = cacheLimit - entries.filter((e) => e.keepAlive).length;
+  return capacity > 0 ? merged.slice(-capacity) : [];
 }
 
 export function stackReducer(
@@ -44,6 +73,7 @@ export function stackReducer(
     case "PUSH": {
       const previousTop = topOf(state.entries);
       return {
+        ...state,
         entries: [...state.entries, action.entry],
         leaving: [],
         transition: action.animate
@@ -55,20 +85,30 @@ export function stackReducer(
           : null,
       };
     }
-    case "REPLACE":
+    case "REPLACE": {
+      const entries = [...state.entries.slice(0, -1), action.entry];
       return {
         ...state,
-        entries: [...state.entries.slice(0, -1), action.entry],
+        entries,
+        cached: cacheEntries({ ...state, entries }, [topOf(state.entries)]),
       };
+    }
     case "POP_TO": {
       const index = Math.max(0, action.index);
       if (index >= state.entries.length - 1) return state;
       const entries = state.entries.slice(0, index + 1);
       const leaving = state.entries.slice(index + 1);
       if (!action.animate) {
-        return { entries, leaving: [], transition: null };
+        return {
+          ...state,
+          entries,
+          leaving: [],
+          transition: null,
+          cached: cacheEntries({ ...state, entries }, leaving),
+        };
       }
       return {
+        ...state,
         entries,
         leaving,
         transition: {
@@ -78,14 +118,29 @@ export function stackReducer(
         },
       };
     }
-    case "RESET":
-      return createStackState(action.entry);
+    case "RESET": {
+      const next = createStackState(action.entry, state.cacheLimit);
+      return {
+        ...next,
+        cached: cacheEntries(
+          { ...state, entries: next.entries },
+          state.entries
+        ),
+      };
+    }
     case "RESET_PUSH": {
       // 루트만 남기고 새 엔트리를 쌓는다. 이전 top 은 퇴장 애니메이션 동안만 남긴다
       const [root] = state.entries;
       const previousTop = topOf(state.entries);
+      const entries = [root, action.entry];
+      // animate 면 이전 top 은 END_TRANSITION 에서 보관하고, 나머지는 지금 보관한다
+      const dropped = action.animate
+        ? state.entries.slice(1, -1)
+        : state.entries.slice(1);
       return {
-        entries: [root, action.entry],
+        ...state,
+        entries,
+        cached: cacheEntries({ ...state, entries }, dropped),
         leaving: action.animate ? [previousTop] : [],
         transition: action.animate
           ? {
@@ -97,29 +152,48 @@ export function stackReducer(
       };
     }
     case "RESTORE":
-      return { entries: action.entries, leaving: [], transition: null };
-    case "END_TRANSITION":
+      return {
+        ...state,
+        entries: action.entries,
+        leaving: [],
+        transition: null,
+      };
+    case "END_TRANSITION": {
       if (!state.transition && state.leaving.length === 0) return state;
-      return { ...state, leaving: [], transition: null };
+      // resetPush 로 루트가 leaving 에 남은 경우처럼 스택에 아직 있는 엔트리는 보관하지 않는다
+      const inStack = new Set(state.entries.map((entry) => entry.key));
+      const removed = state.leaving.filter((entry) => !inStack.has(entry.key));
+      return {
+        ...state,
+        leaving: [],
+        transition: null,
+        cached: cacheEntries(state, removed),
+      };
+    }
     default:
       return state;
   }
 }
 
-export type PageState = "enter" | "exit" | "idle" | "covered";
+export type PageState = "enter" | "exit" | "idle" | "covered" | "cached";
 
 /** 렌더 순서(아래 → 위)와 각 페이지의 data-state */
 export function getRenderedPages(
   state: StackState
 ): { entry: StackEntry; pageState: PageState; isTop: boolean }[] {
-  const { entries, leaving, transition } = state;
+  const { entries, leaving, transition, cached } = state;
   const top = topOf(entries);
   // push 중 퇴장하는 엔트리(resetPush)는 새 top 아래에 그린다
   const ordered =
     transition?.type === "push"
       ? [...entries.slice(0, -1), ...leaving, top]
       : [...entries, ...leaving];
-  return ordered.map((entry) => {
+  const cachedPages = cached.map((entry) => ({
+    entry,
+    pageState: "cached" as PageState,
+    isTop: false,
+  }));
+  const stackPages = ordered.map((entry) => {
     const isTop = entry.key === top.key;
     let pageState: PageState = isTop ? "idle" : "covered";
     if (transition?.type === "push") {
@@ -132,4 +206,5 @@ export function getRenderedPages(
     }
     return { entry, pageState, isTop };
   });
+  return [...cachedPages, ...stackPages];
 }
