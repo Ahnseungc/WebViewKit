@@ -34,6 +34,14 @@ export type StackAction =
   | { type: "RESET"; entry: StackEntry }
   | { type: "RESET_PUSH"; entry: StackEntry; animate: boolean }
   | { type: "RESTORE"; entries: StackEntry[] }
+  | {
+      type: "REVIVE";
+      entry: StackEntry;
+      direction: "push" | "pop";
+      /** 되살린 뒤 entry 의 스택 위치 */
+      index: number;
+      animate: boolean;
+    }
   | { type: "END_TRANSITION" };
 
 const topOf = (entries: StackEntry[]) => entries[entries.length - 1];
@@ -72,12 +80,77 @@ function flushLeaving(state: StackState, nextEntries: StackEntry[]) {
   return cacheEntries({ ...state, entries: nextEntries }, removed);
 }
 
+/** 보관 목록에서 되살린 엔트리를 스택에 올린다 */
+function revive(
+  state: StackState,
+  action: Extract<StackAction, { type: "REVIVE" }>
+): StackState {
+  const { entry, direction, index, animate } = action;
+  const previousTop = topOf(state.entries);
+  const entries = [...state.entries.slice(0, index), entry];
+  const removed = state.entries.slice(index);
+  const cached = state.cached.filter((item) => item.key !== entry.key);
+  const base = { ...state, entries, cached };
+  if (!animate || (direction === "pop" && removed.length === 0)) {
+    return {
+      ...base,
+      cached: cacheEntries(base, removed),
+      leaving: [],
+      transition: null,
+    };
+  }
+  if (direction === "push") {
+    // 이전 top 이 스택에서 빠졌으면 퇴장 애니메이션 동안만 leaving 에 둔다
+    const stillInStack = !removed.includes(previousTop);
+    return {
+      ...base,
+      cached: cacheEntries(
+        base,
+        removed.filter((item) => item !== previousTop)
+      ),
+      leaving: stillInStack ? [] : [previousTop],
+      transition: {
+        type: "push",
+        enterKey: entry.key,
+        exitKey: previousTop.key,
+      },
+    };
+  }
+  return {
+    ...base,
+    leaving: removed,
+    transition: {
+      type: "pop",
+      enterKey: entry.key,
+      exitKeys: removed.map((item) => item.key),
+    },
+  };
+}
+
+/** path 가 같은 되살릴 엔트리를 찾는다. includeRemovable 이면 지워질 스택 쪽(keepAlive)을 먼저 본다 */
+export function findRevivable(
+  state: StackState,
+  path: string,
+  opts: { includeRemovable?: boolean } = {}
+): StackEntry | undefined {
+  const matches = (entry: StackEntry) => entry.path === path;
+  const fromStack = opts.includeRemovable
+    ? [...state.entries.slice(1)]
+        .reverse()
+        .find((entry) => entry.keepAlive && matches(entry))
+    : undefined;
+  return (
+    fromStack ?? [...state.cached].reverse().find((entry) => matches(entry))
+  );
+}
+
 const OVERWRITES_LEAVING = new Set<StackAction["type"]>([
   "PUSH",
   "POP_TO",
   "RESET",
   "RESET_PUSH",
   "RESTORE",
+  "REVIVE",
 ]);
 
 export function stackReducer(
@@ -157,21 +230,28 @@ function reduce(state: StackState, action: StackAction): StackState {
         ),
       };
     }
+    case "REVIVE":
+      return revive(state, action);
     case "RESET_PUSH": {
       // 루트만 남기고 새 엔트리를 쌓는다. 이전 top 은 퇴장 애니메이션 동안만 남긴다
       const [root] = state.entries;
       const previousTop = topOf(state.entries);
       const entries = [root, action.entry];
+      // 재사용하는 엔트리(같은 key)는 보관하지 않고 원래 있던 곳에서 뺀다
+      const reusedKey = action.entry.key;
+      const sameTop = previousTop.key === reusedKey;
       // animate 면 이전 top 은 END_TRANSITION 에서 보관하고, 나머지는 지금 보관한다
-      const dropped = action.animate
-        ? state.entries.slice(1, -1)
-        : state.entries.slice(1);
+      const dropped = (
+        action.animate ? state.entries.slice(1, -1) : state.entries.slice(1)
+      ).filter((entry) => entry.key !== reusedKey);
+      const cached = state.cached.filter((entry) => entry.key !== reusedKey);
+      const exiting = action.animate && !sameTop;
       return {
         ...state,
         entries,
-        cached: cacheEntries({ ...state, entries }, dropped),
-        leaving: action.animate ? [previousTop] : [],
-        transition: action.animate
+        cached: cacheEntries({ ...state, entries, cached }, dropped),
+        leaving: exiting ? [previousTop] : [],
+        transition: exiting
           ? {
               type: "push",
               enterKey: action.entry.key,

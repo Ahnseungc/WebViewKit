@@ -1,5 +1,6 @@
 import {
   createStackState,
+  findRevivable,
   getRenderedPages,
   type StackEntry,
   stackReducer,
@@ -259,5 +260,138 @@ describe("keep-alive 보관", () => {
     state = stackReducer(state, { type: "END_TRANSITION" });
 
     expect(keys(state.cached)).toEqual(["c"]);
+  });
+});
+
+describe("keep-alive 되살리기", () => {
+  const push = (state: ReturnType<typeof createStackState>, e: StackEntry) =>
+    stackReducer(state, { type: "PUSH", entry: e, animate: false });
+  const cachedState = () => {
+    let state = push(createStackState(entry("a"), 3), kept("b"));
+    state = stackReducer(state, { type: "POP_TO", index: 0, animate: false });
+    return state;
+  };
+
+  it("REVIVE push 는 cached 엔트리를 같은 key 로 top 에 올린다", () => {
+    const state = stackReducer(cachedState(), {
+      type: "REVIVE",
+      entry: kept("b"),
+      direction: "push",
+      index: 1,
+      animate: true,
+    });
+
+    expect(states(state)).toEqual(["a:exit", "b:enter"]);
+    expect(state.cached).toEqual([]);
+    expect(state.entries[1].key).toBe("b");
+  });
+
+  it("REVIVE pop 은 아래를 자르고 pop 전환으로 되살린다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, kept("b"));
+    state = push(state, entry("c"));
+    state = stackReducer(state, { type: "POP_TO", index: 0, animate: false });
+    state = push(state, entry("c"));
+    state = push(state, entry("d"));
+    state = stackReducer(state, {
+      type: "REVIVE",
+      entry: kept("b"),
+      direction: "pop",
+      index: 1,
+      animate: true,
+    });
+
+    expect(keys(state.entries)).toEqual(["a", "b"]);
+    expect(states(state)).toContain("b:enter");
+    expect(states(state)).toContain("d:exit");
+    expect(state.cached).toEqual([]);
+  });
+
+  it("REVIVE 는 전환 중에도 퇴장 중인 keepAlive 를 잃지 않고 되살린 key 는 cached 에 남기지 않는다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, kept("b"));
+    state = push(state, kept("c"));
+    state = stackReducer(state, { type: "POP_TO", index: 0, animate: true });
+    state = stackReducer(state, {
+      type: "REVIVE",
+      entry: kept("b"),
+      direction: "push",
+      index: 1,
+      animate: true,
+    });
+
+    expect(keys(state.cached)).toEqual(["c"]);
+    expect(keys(state.entries)).toEqual(["a", "b"]);
+  });
+
+  it("REVIVE animate=false 는 전환 없이 잘린 엔트리를 즉시 보관한다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, kept("b"));
+    state = push(state, kept("c"));
+    state = stackReducer(state, {
+      type: "REVIVE",
+      entry: kept("z"),
+      direction: "pop",
+      index: 1,
+      animate: false,
+    });
+
+    expect(state.transition).toBeNull();
+    expect(keys(state.cached)).toEqual(["b", "c"]);
+  });
+
+  it("RESET_PUSH 가 지워질 스택 안의 keepAlive 엔트리를 재사용한다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, kept("b"));
+    state = push(state, entry("c"));
+    state = stackReducer(state, {
+      type: "RESET_PUSH",
+      entry: kept("b"),
+      animate: true,
+    });
+
+    expect(keys(state.entries)).toEqual(["a", "b"]);
+    expect(keys(state.cached)).toEqual([]);
+    expect(states(state)).toContain("c:exit");
+  });
+
+  it("RESET_PUSH 가 cached 의 엔트리를 재사용하면 cached 에서 뺀다", () => {
+    const state = stackReducer(cachedState(), {
+      type: "RESET_PUSH",
+      entry: kept("b"),
+      animate: true,
+    });
+
+    expect(keys(state.entries)).toEqual(["a", "b"]);
+    expect(state.cached).toEqual([]);
+  });
+
+  it("RESET_PUSH 대상이 현재 top 이면 전환이 없다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, kept("b"));
+    state = stackReducer(state, {
+      type: "RESET_PUSH",
+      entry: kept("b"),
+      animate: true,
+    });
+
+    expect(state.transition).toBeNull();
+    expect(state.leaving).toEqual([]);
+    expect(keys(state.entries)).toEqual(["a", "b"]);
+    expect(state.cached).toEqual([]);
+  });
+
+  it("findRevivable 은 includeRemovable 일 때 스택 안 keepAlive 를 cached 보다 먼저 찾는다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, kept("b"));
+    const inStack = { ...kept("b"), key: "stack-b" };
+    state = push(state, inStack);
+    state = { ...state, cached: [{ ...kept("b"), key: "cached-b" }] };
+
+    expect(findRevivable(state, "/b")?.key).toBe("cached-b");
+    expect(findRevivable(state, "/b", { includeRemovable: true })?.key).toBe(
+      "stack-b"
+    );
+    expect(findRevivable(state, "/zzz")).toBeUndefined();
   });
 });
