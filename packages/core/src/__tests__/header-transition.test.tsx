@@ -80,6 +80,24 @@ describe("StackHeader 전환", () => {
     expect(backSlot()).toBeNull();
   });
 
+  it("back 버튼 유무가 바뀌어도 각 제목은 자기 페이지 기준 들여쓰기를 유지한다", async () => {
+    renderRouter();
+    act(() => {
+      router.push("/p2");
+    });
+    await settle();
+
+    act(() => {
+      router.back();
+    });
+    await waitFor(() => expect(router.depth).toBe(1));
+
+    const [enter, exit] = screen.getAllByRole("heading", { hidden: true });
+    expect(getComputedStyle(enter).paddingLeft).toBe("0px");
+    expect(getComputedStyle(exit).paddingLeft).toBe("40px");
+    expect(getComputedStyle(backSlot()!).position).toBe("absolute");
+  });
+
   it("headerTransition=false 면 이전 제목을 그리지 않는다", () => {
     renderRouter({ headerTransition: false });
 

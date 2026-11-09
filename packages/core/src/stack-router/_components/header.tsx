@@ -88,6 +88,7 @@ const Header = ({ title, motion }: StackHeaderProps) => {
       <TitleSlot>
         <StyledTitle
           key={currentState.key}
+          withBack={canGoBack}
           css={
             titleMotion
               ? animate(titleMotion, titleKeyframes(titleMotion, "enter"))
@@ -99,6 +100,7 @@ const Header = ({ title, motion }: StackHeaderProps) => {
         {titleMotion && (
           <StyledTitle
             key={titleMotion.exitKey}
+            withBack={titleMotion.backWasVisible}
             aria-hidden="true"
             data-testid="wvk-header-exit-title"
             css={[
@@ -118,7 +120,12 @@ const Header = ({ title, motion }: StackHeaderProps) => {
  styles
  */
 
+/** BackRouter 버튼 폭. back 버튼이 있는 페이지의 제목은 이만큼 들여 쓴다 */
+const BACK_SLOT_WIDTH = "40px";
+const HEADER_PADDING_X = "1rem";
+
 const StyledHeader = styled.header`
+  position: relative;
   width: 100%;
   height: 64px;
   flex-shrink: 0;
@@ -127,12 +134,17 @@ const StyledHeader = styled.header`
   border-bottom: 1px solid var(--wvk-header-border, #e5e7eb);
   display: flex;
   align-items: center;
-  padding: 0 1rem;
+  padding: 0 ${HEADER_PADDING_X};
 `;
 
+/** 흐름 밖에 두어 back 버튼이 생기거나 사라져도 제목이 밀리지 않게 한다 */
 const BackSlot = styled.div`
+  position: absolute;
+  top: 50%;
+  left: ${HEADER_PADDING_X};
+  z-index: 1;
   display: flex;
-  flex-shrink: 0;
+  transform: translateY(-50%);
 `;
 
 const TitleSlot = styled.div`
@@ -145,8 +157,10 @@ const TitleSlot = styled.div`
   overflow: hidden;
 `;
 
-const StyledTitle = styled.h1`
+const StyledTitle = styled.h1<{ withBack: boolean }>`
   margin: 0;
+  box-sizing: border-box;
+  padding-left: ${({ withBack }) => (withBack ? BACK_SLOT_WIDTH : "0")};
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--wvk-header-color, #111827);
