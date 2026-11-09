@@ -7,7 +7,7 @@ export interface ActivityContextValue {
   params: Record<string, string>;
   query: Record<string, string>;
   data?: unknown;
-  /** 스택 내 위치 (0 = root) */
+  /** 스택 내 위치 (0 = root). 퇴장 중이면 빠지기 전 위치, 보관 중이면 -1 */
   index: number;
   isTop: boolean;
   /** keepAlive 로 보관 중인 페이지 (스택에서는 빠졌지만 마운트 유지) */

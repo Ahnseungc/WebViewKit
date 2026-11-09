@@ -64,6 +64,8 @@ const isDevEnv = () =>
   typeof process !== "undefined" && process.env?.NODE_ENV === "development";
 
 const MIN_MOUNTED_PAGES = 1;
+/** 보관(cached) 페이지의 useActivity().index */
+const CACHED_ACTIVITY_INDEX = -1;
 
 const StackRouterProvider = ({
   initialActivity,
@@ -140,6 +142,17 @@ const StackRouterProvider = ({
   const stackIndexByKey = new Map(
     state.entries.map((entry, index) => [entry.key, index])
   );
+  // useActivity().index: 스택 위치. 퇴장 중이면 빠지기 전 위치, 보관 중이면 -1
+  const activityIndexOf = (entry: StackEntry) => {
+    const stackIndex = stackIndexByKey.get(entry.key);
+    if (stackIndex !== undefined) return stackIndex;
+    const leavingIndex = state.leaving.findIndex(
+      (item) => item.key === entry.key
+    );
+    return leavingIndex === -1
+      ? CACHED_ACTIVITY_INDEX
+      : state.entries.length + leavingIndex;
+  };
   const mountLimit =
     maxMountedPages === undefined
       ? Infinity
@@ -204,7 +217,7 @@ const StackRouterProvider = ({
                     params: entry.params,
                     query: entry.query,
                     data: entry.data,
-                    index,
+                    index: activityIndexOf(entry),
                     isTop,
                     isCached: pageState === "cached",
                   }}

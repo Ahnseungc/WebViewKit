@@ -4,8 +4,9 @@ import {
   render,
   screen,
   waitFor,
+  within,
 } from "@testing-library/react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useActivity, useOnRevive } from "../stack-router/activity-context";
 import StackRouterProvider, {
   type StackRouterContextValue,
@@ -20,9 +21,21 @@ let router: StackRouterContextValue;
 let lastActivity: ReturnType<typeof useActivity>;
 let lastIsCached: boolean;
 const onRevive = jest.fn();
+/** 페이지 id → 마지막으로 렌더된 useActivity().index */
+const indexes: Record<string, number> = {};
+/** 페이지 id → 마운트(effect) 횟수 */
+const mounts: Record<string, number> = {};
+
+const useMountCount = (id: string) => {
+  useEffect(() => {
+    mounts[id] = (mounts[id] ?? 0) + 1;
+  }, [id]);
+};
 
 const Plain = ({ id }: { id: string }) => {
   router = useStackRouter();
+  indexes[id] = useActivity().index;
+  useMountCount(id);
   return <div data-testid={id} />;
 };
 
@@ -32,6 +45,8 @@ const Counter = ({ id }: { id: string }) => {
   const activity = useActivity();
   if (activity.isTop) lastActivity = activity;
   if (id === "list") lastIsCached = activity.isCached;
+  indexes[id] = activity.index;
+  useMountCount(id);
   useOnRevive((data) => onRevive(data));
   const [count, setCount] = useState(0);
   return (
@@ -56,7 +71,11 @@ const activities = [
   { path: "/n3", element: <Counter id="n3" /> },
 ];
 
-const renderRouter = (keepAliveLimit?: number, maxMountedPages?: number) =>
+const renderRouter = (
+  keepAliveLimit?: number,
+  maxMountedPages?: number,
+  isShowHeader = false
+) =>
   render(
     <StackRouterProvider
       initialActivity={activities[0]}
@@ -65,6 +84,7 @@ const renderRouter = (keepAliveLimit?: number, maxMountedPages?: number) =>
       enableDevTools={false}
       keepAliveLimit={keepAliveLimit}
       maxMountedPages={maxMountedPages}
+      isShowHeader={isShowHeader}
     />
   );
 
@@ -108,6 +128,7 @@ const count = (id: string) => screen.getByTestId(`count-${id}`).textContent;
 
 beforeEach(() => {
   onRevive.mockClear();
+  for (const key of Object.keys(mounts)) delete mounts[key];
   window.history.replaceState(null, "", "/p1");
 });
 
@@ -335,6 +356,52 @@ describe("보관 페이지 렌더", () => {
     await go(() => router.back());
 
     expect(screen.queryByTestId("list")).toBeNull();
+  });
+});
+
+describe("useActivity().index", () => {
+  const backButtonIn = (id: string) =>
+    within(screen.getByTestId(id).parentElement as HTMLElement).queryByRole(
+      "button",
+      { name: "뒤로 가기", hidden: true }
+    );
+
+  it("보관 페이지가 있어도 루트의 index 는 0 이고 back 버튼이 없다", async () => {
+    renderRouter(undefined, undefined, true);
+    await go(() => router.push("/list"));
+    await go(() => router.back());
+
+    expect(indexes.p1).toBe(0);
+    expect(backButtonIn("p1")).toBeNull();
+  });
+
+  it("스택 페이지의 index 는 보관 페이지 수와 무관하게 스택 위치다", async () => {
+    renderRouter(undefined, undefined, true);
+    await go(() => router.push("/list"));
+    await go(() => router.back());
+    await go(() => router.push("/plain"));
+
+    expect(indexes.p1).toBe(0);
+    expect(indexes.plain).toBe(1);
+    expect(indexes.list).toBe(-1);
+  });
+
+  it("pop 으로 퇴장하는 페이지는 슬라이드 동안 back 버튼을 유지한다", async () => {
+    renderRouter(undefined, undefined, true);
+    await go(() => router.push("/list"));
+    await go(() => router.back());
+    await go(() => router.push("/plain"));
+
+    act(() => {
+      router.back();
+    });
+
+    const plainWrapper = screen.getByTestId("plain").parentElement;
+    expect(plainWrapper?.getAttribute("data-state")).toBe("exit");
+    expect(indexes.plain).toBe(1);
+    expect(backButtonIn("plain")).not.toBeNull();
+    expect(backButtonIn("p1")).toBeNull();
+    await wait(HISTORY_SETTLE_MS);
   });
 });
 
