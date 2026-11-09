@@ -15,7 +15,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
       Activities={[
         { path: "/", element: <Home /> },
         { path: "/about", element: <About /> },
-        { path: "/detail/:id", element: <Detail /> },
+        { path: "/detail/:id", element: <Detail />, keepAlive: true },
       ]}
       initialActivity={{ path: "/", element: <Home /> }}
       onBackAtRoot={() => console.info("[demo] back at root")}

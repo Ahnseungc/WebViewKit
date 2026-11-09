@@ -6,6 +6,7 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
 ### Fixed
 
+- back 전환에서 퇴장 페이지 그림자가 끝까지 진하게 남던 문제
 - `reset()` 뒤 브라우저 back 이 지운 페이지를 push 로 되살리던 문제: history 를 루트까지 되감은 뒤 replace
 - history 이동(`history.go`)이 끝나기 전 다른 내비게이션이 끼어 URL·스택이 어긋날 수 있던 문제: 이동 중 잠금
 
@@ -15,6 +16,11 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
 ### Added
 
+- `Activity.keepAlive`: 켠 페이지는 pop 돼도 마운트된 채(`visibility: hidden`) 캐시되고, 같은 `path`(pathname+search)로 push 하면 그 인스턴스가 되살아남(스크롤·입력·state 유지). resetPush 대상과 브라우저 앞으로/뒤로 가기도 되살림. replace·reset 은 되살리지 않음
+- Provider `keepAliveLimit`(기본 `KEEP_ALIVE_LIMIT` = 5, `0` 이면 끔): 캐시 페이지 최대 개수. 마운트 시 1회만 읽음
+- Provider `maxMountedPages`(기본 무제한): 동시에 마운트할 페이지 상한. keepAlive·전환 중 페이지는 항상 마운트, 나머지는 back 시 새로 마운트. 마운트가 15개를 넘으면 dev 경고
+- `useActivity().isCached` 와 `useOnRevive(callback)`: 캐시된 페이지가 되살아날 때 1회 호출(최초 마운트에는 호출 안 됨)
+- `KEEP_ALIVE_LIMIT`, `useOnRevive` export
 - `useStackRouter().resetPush(path, data?)`: 루트만 남기고 `path` 를 push. 브라우저 history 도 `[루트, path]` 로 정리(앞으로 가기 기록 제거)
 
 ## [2.1.0] - 2026-11-04

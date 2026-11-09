@@ -15,6 +15,14 @@ const Detail = () => {
       <button onClick={() => push(`/detail/${nextId}`)}>Next ({nextId})</button>
       <button onClick={() => popTo("/")}>Pop to Home</button>
       <button onClick={() => reset("/")}>Reset</button>
+      <div>
+        <input placeholder="keepAlive 확인용 입력" aria-label="keepAlive 확인용 입력" />
+      </div>
+      <ul>
+        {Array.from({ length: 50 }, (_, i) => (
+          <li key={i}>Row {i + 1}</li>
+        ))}
+      </ul>
     </main>
   );
 };

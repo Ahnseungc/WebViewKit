@@ -1,7 +1,7 @@
 import { useStackRouter } from "@ahnseungchan/webviewkit";
 
 const Home = () => {
-  const { push } = useStackRouter();
+  const { push, resetPush } = useStackRouter();
 
   return (
     <main style={{ padding: 16 }}>
@@ -16,6 +16,7 @@ const Home = () => {
           </li>
         ))}
       </ul>
+      <button onClick={() => resetPush("/detail/1")}>Reset + Detail 1</button>
     </main>
   );
 };
