@@ -52,8 +52,11 @@ export interface StackRouterContextValue {
 
 const StackRouterContext = createContext<StackRouterContextValue | null>(null);
 
+/** StackRouterProvider 밖이면 null. 스택 안·밖에서 같이 쓰는 링크·훅에서 쓴다 */
+export const useOptionalStackRouter = () => useContext(StackRouterContext);
+
 export const useStackRouter = () => {
-  const context = useContext(StackRouterContext);
+  const context = useOptionalStackRouter();
   if (!context) {
     throw new Error("useStackRouter must be used within a StackRouterProvider");
   }
@@ -208,7 +211,7 @@ const StackRouterProvider = ({
     );
   }, [mountedCount]);
 
-  const showDevTools = enableDevTools ?? isDevEnv();
+  const showDevTools = enableDevTools ?? false;
 
   return (
     <StackRouterContext.Provider value={value}>

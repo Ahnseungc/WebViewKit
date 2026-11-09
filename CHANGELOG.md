@@ -2,7 +2,17 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
-## [2.2.1] - 2026-11-09
+## [2.3.0] - 2026-11-09
+
+### Added
+
+- `useOptionalStackRouter()`: Provider 밖이면 `null` 을 주는 `useStackRouter`. 스택 안·밖 공용 링크에서 분기할 때
+
+### Changed
+
+- `@emotion/react`·`@emotion/styled` 를 peer 에서 dependencies 로 옮김: 따로 설치하지 않아도 된다
+- `enableDevTools` 기본값을 `false` 로: 개발 모드여도 켜야 스택 로드맵 오버레이가 보인다
+- `useOnRevive` 를 스택 밖에서 렌더해도 throw 하지 않고 아무것도 하지 않는다
 
 ### Fixed
 

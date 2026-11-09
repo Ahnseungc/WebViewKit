@@ -20,6 +20,7 @@ export type { StackEntry } from "./stack-router/stack-reducer";
 export {
   type StackRouterContextValue,
   default as StackRouterProvider,
+  useOptionalStackRouter,
   useStackRouter,
 } from "./stack-router/stack-router-provider";
 export type { StackBridgeSyncOptions } from "./stack-router/use-stack-bridge-sync";

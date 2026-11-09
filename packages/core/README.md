@@ -7,7 +7,7 @@ React **WebView·하이브리드 앱**용 스택(push/back) 네비게이션 + �
 
 ```bash
 npm install @ahnseungchan/webviewkit
-npm install react react-dom @emotion/react @emotion/styled   # peer (react >= 18)
+npm install react react-dom   # peer (react >= 18). emotion 은 함께 설치된다
 ```
 
 ## Quick Start
@@ -72,7 +72,7 @@ export default function App() {
 | `isShowHeader` | `false` | 각 페이지 상단에 `StackHeader` 렌더. 헤더가 페이지와 함께 슬라이드되고, 스크롤 시 상단 고정(sticky) |
 | `safeArea` | `false` | `env(safe-area-inset-*)` padding |
 | `maxWidth` | `"600px"` | 본문 최대 폭 |
-| `enableDevTools` | dev 에서 true | 스택 로드맵 오버레이 |
+| `enableDevTools` | `false` | 스택 로드맵 오버레이 (개발 중 켜서 쓴다) |
 | `bridge` | — | `true` 또는 `{ allowUrl, onError, emitStackChanged }` — 네이티브 연동 |
 
 ## Hooks
@@ -80,9 +80,10 @@ export default function App() {
 | hook | 반환 |
 |------|------|
 | `useStackRouter()` | `push`, `replace`, `reset`, `resetPush`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `currentState`, `entries`, `isTransitioning` |
+| `useOptionalStackRouter()` | `useStackRouter()` 와 같지만 Provider 밖이면 `null` (throw 안 함). 스택 안·밖에서 같이 쓰는 링크·컴포넌트에서 분기할 때 |
 | `useStackRouter().resetPush(path, data?)` | 루트만 남기고 `path` 를 push (스택 `[루트, path]`, push 슬라이드). 결제 완료 → 결과 화면처럼 중간 단계를 지울 때 |
 | `useActivity()` | 현재 페이지의 `{ key, path, pattern, params, query, data, index, isTop, isCached, revision }`. `index` 는 스택 위치(0 = 루트, 캐시 중이면 `-1`). `isCached` 는 keepAlive 로 숨겨진 상태. `revision` 은 인스턴스가 새 `data` 로 재사용된 횟수 |
-| `useOnRevive(callback)` | 기존 인스턴스가 새 `data` 로 재사용될 때마다 `callback(data)` 1회 호출: 캐시된 페이지가 되살아날 때, `resetPush` 가 스택 안 keepAlive 인스턴스를 재사용할 때. 최초 마운트에는 호출 안 함. 새 `data` 로 화면을 갱신할 때 |
+| `useOnRevive(callback)` | 기존 인스턴스가 새 `data` 로 재사용될 때마다 `callback(data)` 1회 호출: 캐시된 페이지가 되살아날 때, `resetPush` 가 스택 안 keepAlive 인스턴스를 재사용할 때. 최초 마운트에는 호출 안 함. 스택 밖에서는 아무것도 안 함. 되살아난 목록은 데이터를 다시 부르지 않으니, 최신 데이터가 필요하면 여기서 다시 불러온다 |
 | `useParams()` | `params` |
 
 테마는 CSS 변수로 바꿉니다: `--wvk-page-bg`, `--wvk-dim-color`, `--wvk-edge-shadow`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.

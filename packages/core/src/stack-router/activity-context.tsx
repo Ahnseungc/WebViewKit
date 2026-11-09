@@ -38,10 +38,13 @@ export function useParams<
 
 /**
  * 이 페이지 인스턴스가 새 data 로 재사용될 때마다 1회 호출: 보관본이 되살아날 때,
- * resetPush 가 스택 안 인스턴스를 재사용할 때. 첫 마운트에는 호출하지 않는다
+ * resetPush 가 스택 안 인스턴스를 재사용할 때. 첫 마운트에는 호출하지 않는다.
+ * 스택 밖에서 렌더되면 아무것도 하지 않는다 (스택 안·밖 공용 화면에서 그대로 쓸 수 있게)
  */
 export function useOnRevive(callback: (data: unknown) => void): void {
-  const { revision, data } = useActivity();
+  const activity = useContext(ActivityContext);
+  const revision = activity?.revision ?? 0;
+  const data = activity?.data;
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
   const lastRevisionRef = useRef(revision);
