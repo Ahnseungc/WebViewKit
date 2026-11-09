@@ -300,6 +300,34 @@ describe("keepAlive 되살리기", () => {
     await expectConsistent(["/p1", "/list"]);
   });
 
+  it("브라우저 back 이 index 0 의 보관 key 에 닿으면 pop 되살리기 대신 reset 한다", async () => {
+    renderRouter();
+    await go(() => router.push("/list"));
+    const listKey = lastActivity.key;
+    click("list", 2);
+    await go(() => router.back());
+    const rootKey = router.entries[0].key;
+    // 루트 자리(index 0)의 history 항목이 보관된 /list 를 가리키게 한다
+    window.history.replaceState(
+      { key: listKey, index: 0, path: "/list" },
+      "",
+      "/list"
+    );
+    window.history.pushState(
+      { key: rootKey, index: 0, path: "/p1" },
+      "",
+      "/p1"
+    );
+
+    await go(() => window.history.back());
+
+    // pop 되살리기였다면 루트가 퇴장 페이지(index 1)로 한 번 더 렌더된다. reset 은 바로 언마운트
+    expect(indexes.p1).toBe(0);
+    expect(screen.queryByTestId("p1")).toBeNull();
+    expect(screen.getAllByTestId("count-list")).toHaveLength(1);
+    await expectConsistent(["/list"]);
+  });
+
   it("스택 아래에 같은 keepAlive path 가 있으면 push 는 새 엔트리를 만든다", async () => {
     renderRouter();
     await go(() => router.push("/list"));

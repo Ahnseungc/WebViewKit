@@ -278,6 +278,8 @@ export function useStackNavigation(
       if (
         cachedEntry &&
         typeof targetIndex === "number" &&
+        // 루트 자리(0)는 되살리지 않는다. 아래 일반 처리(reset)로 넘긴다
+        targetIndex >= 1 &&
         targetIndex <= entries.length
       ) {
         busyRef.current = true;
