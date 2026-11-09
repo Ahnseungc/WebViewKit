@@ -6,7 +6,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import React, { useState } from "react";
-import { useActivity } from "../stack-router/activity-context";
+import { useActivity, useOnRevive } from "../stack-router/activity-context";
 import StackRouterProvider, {
   type StackRouterContextValue,
   useStackRouter,
@@ -18,6 +18,8 @@ const HISTORY_SETTLE_MS = 100;
 
 let router: StackRouterContextValue;
 let lastActivity: ReturnType<typeof useActivity>;
+let lastIsCached: boolean;
+const onRevive = jest.fn();
 
 const Plain = ({ id }: { id: string }) => {
   router = useStackRouter();
@@ -29,6 +31,8 @@ const Counter = ({ id }: { id: string }) => {
   router = useStackRouter();
   const activity = useActivity();
   if (activity.isTop) lastActivity = activity;
+  if (id === "list") lastIsCached = activity.isCached;
+  useOnRevive((data) => onRevive(data));
   const [count, setCount] = useState(0);
   return (
     <div data-testid={id}>
@@ -99,6 +103,7 @@ const click = (id: string, times: number) => {
 const count = (id: string) => screen.getByTestId(`count-${id}`).textContent;
 
 beforeEach(() => {
+  onRevive.mockClear();
   window.history.replaceState(null, "", "/p1");
 });
 
@@ -258,5 +263,52 @@ describe("keepAlive 되살리기", () => {
 
     expect(count("list")).toBe("0");
     await expectConsistent(["/p1", "/list"]);
+  });
+});
+
+describe("보관 페이지 렌더", () => {
+  it("보관 중 페이지는 cached 상태이고 inert·aria-hidden 이다", async () => {
+    renderRouter();
+    await go(() => router.push("/list"));
+    await go(() => router.back());
+
+    const wrapper = screen.getByTestId("list").parentElement as HTMLElement;
+    expect(wrapper.getAttribute("data-state")).toBe("cached");
+    expect(wrapper.hasAttribute("inert")).toBe(true);
+    expect(wrapper.getAttribute("aria-hidden")).toBe("true");
+    expect(getComputedStyle(wrapper).visibility).toBe("hidden");
+  });
+
+  it("보관 중 isCached 가 true, 되살아나면 false", async () => {
+    renderRouter();
+    await go(() => router.push("/list"));
+    expect(lastIsCached).toBe(false);
+    await go(() => router.back());
+    expect(lastIsCached).toBe(true);
+
+    await go(() => router.push("/list"));
+
+    expect(lastIsCached).toBe(false);
+  });
+
+  it("useOnRevive 는 되살아날 때 새 data 로 한 번 호출된다", async () => {
+    renderRouter();
+    await go(() => router.push("/list", { v: 1 }));
+    expect(onRevive).not.toHaveBeenCalled();
+    await go(() => router.back());
+    expect(onRevive).not.toHaveBeenCalled();
+
+    await go(() => router.push("/list", { v: 2 }));
+
+    expect(onRevive).toHaveBeenCalledTimes(1);
+    expect(onRevive).toHaveBeenCalledWith({ v: 2 });
+  });
+
+  it("keepAliveLimit 0 이면 cached 페이지를 렌더하지 않는다", async () => {
+    renderRouter(0);
+    await go(() => router.push("/list"));
+    await go(() => router.back());
+
+    expect(screen.queryByTestId("list")).toBeNull();
   });
 });

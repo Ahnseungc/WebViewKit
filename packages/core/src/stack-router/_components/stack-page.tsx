@@ -97,7 +97,7 @@ const PageWrapper = styled.div<PageWrapperProps>`
   background: var(--wvk-page-bg, #ffffff);
   z-index: ${({ zIndex }) => zIndex};
   visibility: ${({ pageState }) =>
-    pageState === "covered" ? "hidden" : "visible"};
+    pageState === "covered" || pageState === "cached" ? "hidden" : "visible"};
   ${({ pageState, direction, transitionType, duration }) => {
     if (pageState !== "enter" && pageState !== "exit") return "";
     if (transitionType === "none" || duration === 0) return "";

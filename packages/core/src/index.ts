@@ -2,6 +2,7 @@ export * from "./bridge";
 export {
   BACK_TIMEOUT_MS,
   BRIDGE_TIMEOUT_MS,
+  KEEP_ALIVE_LIMIT,
   STACK_TRANSITION_MS,
 } from "./constants";
 export { history } from "./history";
@@ -11,6 +12,7 @@ export { default as StackHeader } from "./stack-router/_components/header";
 export {
   type ActivityContextValue,
   useActivity,
+  useOnRevive,
   useParams,
 } from "./stack-router/activity-context";
 export { findActivity, matchPath, parseQuery } from "./stack-router/match-path";

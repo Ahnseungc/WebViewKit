@@ -143,6 +143,7 @@ const StackRouterProvider = ({
                   data: entry.data,
                   index,
                   isTop,
+                  isCached: pageState === "cached",
                 }}
               >
                 <StackPage
