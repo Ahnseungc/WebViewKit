@@ -9,6 +9,8 @@ export interface StackEntry {
   data?: unknown;
   /** true 면 스택에서 빠져도 보관 목록(cached)에 남긴다 */
   keepAlive?: boolean;
+  /** 기존 인스턴스를 새 data 로 재사용(REVIVE·RESET_PUSH)할 때마다 1씩 오른다. 없으면 0 */
+  revision?: number;
 }
 
 export type StackTransition =
@@ -45,6 +47,12 @@ export type StackAction =
   | { type: "END_TRANSITION" };
 
 const topOf = (entries: StackEntry[]) => entries[entries.length - 1];
+
+/** 기존 인스턴스를 재사용한다는 표시 (useOnRevive 트리거) */
+const bumpRevision = (entry: StackEntry): StackEntry => ({
+  ...entry,
+  revision: (entry.revision ?? 0) + 1,
+});
 
 export function createStackState(
   entry: StackEntry,
@@ -85,7 +93,8 @@ function revive(
   state: StackState,
   action: Extract<StackAction, { type: "REVIVE" }>
 ): StackState {
-  const { entry, direction, index, animate } = action;
+  const { direction, index, animate } = action;
+  const entry = bumpRevision(action.entry);
   const previousTop = topOf(state.entries);
   const entries = [...state.entries.slice(0, index), entry];
   const removed = state.entries.slice(index);
@@ -236,9 +245,15 @@ function reduce(state: StackState, action: StackAction): StackState {
       // 루트만 남기고 새 엔트리를 쌓는다. 이전 top 은 퇴장 애니메이션 동안만 남긴다
       const [root] = state.entries;
       const previousTop = topOf(state.entries);
-      const entries = [root, action.entry];
       // 재사용하는 엔트리(같은 key)는 보관하지 않고 원래 있던 곳에서 뺀다
       const reusedKey = action.entry.key;
+      const isReused = [...state.entries, ...state.cached].some(
+        (entry) => entry.key === reusedKey
+      );
+      const entries = [
+        root,
+        isReused ? bumpRevision(action.entry) : action.entry,
+      ];
       const sameTop = previousTop.key === reusedKey;
       // animate 면 이전 top 은 END_TRANSITION 에서 보관하고, 나머지는 지금 보관한다
       const dropped = (

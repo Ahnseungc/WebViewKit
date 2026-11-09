@@ -12,6 +12,8 @@ export interface ActivityContextValue {
   isTop: boolean;
   /** keepAlive 로 보관 중인 페이지 (스택에서는 빠졌지만 마운트 유지) */
   isCached: boolean;
+  /** 이 인스턴스가 새 data 로 재사용(보관본 되살리기·resetPush 재사용)된 횟수 */
+  revision: number;
 }
 
 export const ActivityContext = createContext<ActivityContextValue | null>(null);
@@ -34,15 +36,18 @@ export function useParams<
   return useActivity().params as TParams;
 }
 
-/** 보관(cached) 중이던 페이지가 되살아난 직후 1회 호출. 첫 마운트에는 호출하지 않는다 */
+/**
+ * 이 페이지 인스턴스가 새 data 로 재사용될 때마다 1회 호출: 보관본이 되살아날 때,
+ * resetPush 가 스택 안 인스턴스를 재사용할 때. 첫 마운트에는 호출하지 않는다
+ */
 export function useOnRevive(callback: (data: unknown) => void): void {
-  const { isCached, data } = useActivity();
+  const { revision, data } = useActivity();
   const callbackRef = useRef(callback);
   callbackRef.current = callback;
-  const wasCachedRef = useRef(isCached);
+  const lastRevisionRef = useRef(revision);
 
   useEffect(() => {
-    if (wasCachedRef.current && !isCached) callbackRef.current(data);
-    wasCachedRef.current = isCached;
-  }, [isCached, data]);
+    if (revision > lastRevisionRef.current) callbackRef.current(data);
+    lastRevisionRef.current = revision;
+  }, [revision, data]);
 }

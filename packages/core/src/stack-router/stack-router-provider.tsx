@@ -230,6 +230,7 @@ const StackRouterProvider = ({
                     index: activityIndexOf(entry),
                     isTop,
                     isCached: pageState === "cached",
+                    revision: entry.revision ?? 0,
                   }}
                 >
                   <StackPage

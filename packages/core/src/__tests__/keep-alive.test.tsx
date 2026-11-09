@@ -374,6 +374,18 @@ describe("보관 페이지 렌더", () => {
     expect(onRevive).toHaveBeenCalledWith({ v: 2 });
   });
 
+  it("useOnRevive 는 resetPush 가 스택 안 인스턴스를 재사용할 때도 새 data 로 한 번 호출된다", async () => {
+    renderRouter();
+    await go(() => router.push("/list", { v: 1 }));
+    await go(() => router.push("/plain"));
+    expect(onRevive).not.toHaveBeenCalled();
+
+    await go(() => router.resetPush("/list", { v: 2 }));
+
+    expect(onRevive).toHaveBeenCalledTimes(1);
+    expect(onRevive).toHaveBeenCalledWith({ v: 2 });
+  });
+
   it("keepAliveLimit 0 이면 cached 페이지를 렌더하지 않는다", async () => {
     renderRouter(0);
     await go(() => router.push("/list"));

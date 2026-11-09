@@ -381,6 +381,46 @@ describe("keep-alive 되살리기", () => {
     expect(state.cached).toEqual([]);
   });
 
+  it("REVIVE 는 되살린 엔트리의 revision 을 올린다", () => {
+    let state = stackReducer(cachedState(), {
+      type: "REVIVE",
+      entry: kept("b"),
+      direction: "push",
+      index: 1,
+      animate: false,
+    });
+    expect(state.entries[1].revision).toBe(1);
+
+    state = stackReducer(state, { type: "POP_TO", index: 0, animate: false });
+    state = stackReducer(state, {
+      type: "REVIVE",
+      entry: state.cached[0],
+      direction: "push",
+      index: 1,
+      animate: false,
+    });
+    expect(state.entries[1].revision).toBe(2);
+  });
+
+  it("RESET_PUSH 가 기존 엔트리를 재사용하면 revision 을 올리고, 새 엔트리면 올리지 않는다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, kept("b"));
+    state = push(state, entry("c"));
+    const reused = stackReducer(state, {
+      type: "RESET_PUSH",
+      entry: kept("b"),
+      animate: false,
+    });
+    expect(reused.entries[1].revision).toBe(1);
+
+    const fresh = stackReducer(state, {
+      type: "RESET_PUSH",
+      entry: entry("d"),
+      animate: false,
+    });
+    expect(fresh.entries[1].revision).toBeUndefined();
+  });
+
   it("findRevivable 은 includeRemovable 일 때 스택 안 keepAlive 를 cached 보다 먼저 찾는다", () => {
     let state = createStackState(entry("a"), 3);
     state = push(state, kept("b"));
