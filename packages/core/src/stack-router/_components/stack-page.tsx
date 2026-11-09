@@ -15,14 +15,16 @@ type Direction = "push" | "pop";
 const IOS_EASING = "cubic-bezier(0.32, 0.72, 0, 1)";
 const FADE_EASING = "ease";
 const PARALLAX_OFFSET = "-30%";
+const EDGE_SHADOW = "var(--wvk-edge-shadow, -6px 0 24px rgba(0, 0, 0, 0.12))";
 
+// 그림자는 dim 과 함께 나타나고 사라진다. 고정이면 back 끝까지 진하게 남는다
 const coverIn = keyframes`
-  from { transform: translate3d(100%, 0, 0); }
-  to { transform: translate3d(0, 0, 0); }
+  from { transform: translate3d(100%, 0, 0); box-shadow: none; }
+  to { transform: translate3d(0, 0, 0); box-shadow: ${EDGE_SHADOW}; }
 `;
 const coverOut = keyframes`
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(100%, 0, 0); }
+  from { transform: translate3d(0, 0, 0); box-shadow: ${EDGE_SHADOW}; }
+  to { transform: translate3d(100%, 0, 0); box-shadow: none; }
 `;
 const parallaxOut = keyframes`
   from { transform: translate3d(0, 0, 0); }
@@ -64,7 +66,6 @@ function slideStyles(
   if (layerOf(direction, pageState) === "upper") {
     return css`
       animation: ${direction === "push" ? coverIn : coverOut} ${timing};
-      box-shadow: var(--wvk-edge-shadow, -6px 0 24px rgba(0, 0, 0, 0.12));
     `;
   }
   return css`
