@@ -75,6 +75,23 @@ export function useStackNavigation(
 
   // 전환 중 입력 잠금 (같은 tick 연타까지 막기 위해 ref)
   const busyRef = useRef(false);
+  // 루트로 되감을 때(reset·resetPush) 오는 popstate 는 스택에 반영하지 않는다
+  const ignorePopRef = useRef(0);
+  // history.go 가 끝나기 전 다른 history 조작이 끼면 스택과 URL 이 어긋나므로 잠근다
+  const pendingTravelRef = useRef(0);
+  const isLocked = () => busyRef.current || pendingTravelRef.current > 0;
+
+  const travel = (delta: number, ignorePop: boolean) => {
+    pendingTravelRef.current += 1;
+    if (ignorePop) ignorePopRef.current += 1;
+    return history.travel(delta).then((popped) => {
+      pendingTravelRef.current -= 1;
+      if (!popped && ignorePop) {
+        ignorePopRef.current = Math.max(0, ignorePopRef.current - 1);
+      }
+      return popped;
+    });
+  };
 
   const resolve = useCallback((path: string) => {
     const { activities, initialActivity } = optionsRef.current;
@@ -99,7 +116,7 @@ export function useStackNavigation(
 
   const push = useCallback(
     (path: string, data?: unknown) => {
-      if (busyRef.current) return false;
+      if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
       const entry = createEntry(hit, path, data);
@@ -117,7 +134,7 @@ export function useStackNavigation(
 
   const replace = useCallback(
     (path: string, data?: unknown) => {
-      if (busyRef.current) return false;
+      if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
       const entry = createEntry(hit, path, data);
@@ -134,34 +151,35 @@ export function useStackNavigation(
 
   const reset = useCallback(
     (path: string, data?: unknown) => {
-      if (busyRef.current) return false;
+      if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
       const entry = createEntry(hit, path, data);
-      history.replace(path, { key: entry.key, index: 0, data });
+      const depth = stateRef.current.entries.length;
       dispatch({ type: "RESET", entry });
+      // 현재 항목만 replace 하면 지운 페이지들이 history 에 남아 브라우저 back 으로 되살아난다
+      const commit = () => {
+        history.replace(path, { key: entry.key, index: 0, data });
+      };
+      if (depth === 1) commit();
+      else void travel(-(depth - 1), true).then(commit);
       return true;
     },
     [resolveOrNotify]
   );
 
-  // resetPush 가 history 를 루트로 되감을 때 오는 popstate 는 스택에 반영하지 않는다
-  const ignorePopRef = useRef(0);
-
   const resetPush = useCallback(
     (path: string, data?: unknown) => {
       const { entries } = stateRef.current;
       if (entries.length === 1) return push(path, data);
-      if (busyRef.current) return false;
+      if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
       const entry = createEntry(hit, path, data);
       busyRef.current = true;
       dispatch({ type: "RESET_PUSH", entry, animate: animate() });
       // 루트로 되감은 뒤 push 해야 앞으로 가기 기록까지 정리된다
-      ignorePopRef.current += 1;
-      void history.travel(-(entries.length - 1)).then((popped) => {
-        if (!popped) ignorePopRef.current = 0;
+      void travel(-(entries.length - 1), true).then(() => {
         history.push(path, { key: entry.key, index: 1, data });
       });
       return true;
@@ -170,7 +188,7 @@ export function useStackNavigation(
   );
 
   const pop = useCallback((count: number = 1) => {
-    if (busyRef.current) return false;
+    if (isLocked()) return false;
     const { entries } = stateRef.current;
     if (entries.length <= 1) {
       optionsRef.current.onBackAtRoot?.();
@@ -183,7 +201,7 @@ export function useStackNavigation(
     // 브라우저가 history traversal 동안 프레임을 늦춰 애니메이션이 시작되지 않는다.
     // 뒤따르는 popstate 는 key 가 이미 top 이라 onPop 에서 no-op 이 된다.
     dispatch({ type: "POP_TO", index: targetIndex, animate: animate() });
-    void history.travel(-delta);
+    void travel(-delta, false);
     return true;
   }, []);
 

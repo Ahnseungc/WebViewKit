@@ -4,6 +4,11 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
 ## [Unreleased]
 
+### Fixed
+
+- `reset()` 뒤 브라우저 back 이 지운 페이지를 push 로 되살리던 문제: history 를 루트까지 되감은 뒤 replace
+- history 이동(`history.go`)이 끝나기 전 다른 내비게이션이 끼어 URL·스택이 어긋날 수 있던 문제: 이동 중 잠금
+
 ### Changed
 
 - `isShowHeader` 헤더를 스택 페이지 안으로 옮김: 페이지마다 자기 제목·back 버튼을 그리고 페이지와 함께 슬라이드(iOS 처럼). 페이지 스크롤 시 상단 sticky. `StackHeader` 를 페이지 밖에서 쓰면 현재 top 기준
