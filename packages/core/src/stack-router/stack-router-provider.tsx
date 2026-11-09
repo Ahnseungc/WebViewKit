@@ -6,17 +6,12 @@ import type {
   Activity,
   HistoryState,
   StackRouterProviderProps,
-  StackTransitionType,
   VisiblePage,
 } from "../type";
-import StackHeader, { type HeaderMotion } from "./_components/header";
+import StackHeader from "./_components/header";
 import StackPage from "./_components/stack-page";
 import { ActivityContext } from "./activity-context";
-import {
-  getRenderedPages,
-  type StackEntry,
-  type StackState,
-} from "./stack-reducer";
+import { getRenderedPages, type StackEntry } from "./stack-reducer";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 import { useStackBridgeSync } from "./use-stack-bridge-sync";
 import { useStackNavigation } from "./use-stack-navigation";
@@ -55,33 +50,6 @@ export const useStackRouter = () => {
   return context;
 };
 
-/** 전환 중이면 헤더가 이전 화면 제목·back 버튼을 같이 그릴 정보 */
-function getHeaderMotion(
-  state: StackState,
-  transitionType: StackTransitionType,
-  duration: number
-): HeaderMotion | null {
-  const { transition, entries, leaving } = state;
-  if (!transition || duration === 0) return null;
-  const exitKey =
-    transition.type === "push"
-      ? transition.exitKey
-      : transition.exitKeys[transition.exitKeys.length - 1];
-  const exitEntry = [...entries, ...leaving].find(
-    (entry) => entry.key === exitKey
-  );
-  if (!exitEntry) return null;
-  return {
-    direction: transition.type,
-    transitionType,
-    duration,
-    exitKey,
-    exitPath: exitEntry.path,
-    // 사라지는 페이지가 루트가 아니었으면 back 버튼이 보였다
-    backWasVisible: exitEntry.key !== entries[0].key,
-  };
-}
-
 const isDevEnv = () =>
   typeof process !== "undefined" && process.env?.NODE_ENV === "development";
 
@@ -90,7 +58,6 @@ const StackRouterProvider = ({
   Activities = [],
   maxWidth = "600px",
   isShowHeader = false,
-  headerTransition = true,
   enableDevTools,
   transition = "slide",
   duration = STACK_TRANSITION_MS,
@@ -161,15 +128,6 @@ const StackRouterProvider = ({
     <StackRouterContext.Provider value={value}>
       <LayoutContainer safeArea={safeArea}>
         <Layout maxWidth={maxWidth} data-testid="layout">
-          {isShowHeader && (
-            <StackHeader
-              motion={
-                headerTransition
-                  ? getHeaderMotion(state, transition, effectiveDuration)
-                  : null
-              }
-            />
-          )}
           <PageContainer>
             {pages.map(({ entry, pageState, isTop }, index) => (
               <ActivityContext.Provider
@@ -196,6 +154,7 @@ const StackRouterProvider = ({
                     pageState === "enter" ? endTransition : undefined
                   }
                 >
+                  {isShowHeader && <StackHeader />}
                   {elementFor(entry.pattern)}
                 </StackPage>
               </ActivityContext.Provider>
