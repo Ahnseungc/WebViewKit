@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { createBridgeId } from "../bridge/protocol";
-import { TRANSITION_END_GRACE_MS } from "../constants";
+import { KEEP_ALIVE_LIMIT, TRANSITION_END_GRACE_MS } from "../constants";
 import { history } from "../history";
 import type { Activity, HistoryState, RestoreStackPolicy } from "../type";
 import { findActivity, type PathMatch } from "./match-path";
 import {
   createStackState,
+  findRevivable,
   type StackEntry,
   stackReducer,
   type StackState,
@@ -17,6 +18,8 @@ export interface StackNavigationOptions {
   /** 0 이면 애니메이션 없이 즉시 전환 */
   duration: number;
   restoreStack: RestoreStackPolicy;
+  /** keepAlive 페이지 최대 보관 수. 0 이면 보관·되살리기 안 함 */
+  keepAliveLimit: number;
   onBackAtRoot?: () => void;
   onNotFound?: (path: string) => void;
 }
@@ -49,6 +52,7 @@ function createEntry(
     params: hit.match.params,
     query: hit.match.query,
     data,
+    keepAlive: hit.activity.keepAlive === true,
   };
 }
 
@@ -67,7 +71,8 @@ export function useStackNavigation(
       createEntry(
         { activity: initialActivity, match: { params: {}, query: {} } },
         initialActivity.path
-      )
+      ),
+      options.keepAliveLimit ?? KEEP_ALIVE_LIMIT
     );
   });
   const stateRef = useRef(state);
@@ -119,14 +124,24 @@ export function useStackNavigation(
       if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
-      const entry = createEntry(hit, path, data);
+      const { entries } = stateRef.current;
+      const revived = findRevivable(stateRef.current, path);
+      const entry = revived
+        ? { ...revived, data }
+        : createEntry(hit, path, data);
       busyRef.current = true;
-      history.push(path, {
-        key: entry.key,
-        index: stateRef.current.entries.length,
-        data,
-      });
-      dispatch({ type: "PUSH", entry, animate: animate() });
+      history.push(path, { key: entry.key, index: entries.length, data });
+      dispatch(
+        revived
+          ? {
+              type: "REVIVE",
+              entry,
+              direction: "push",
+              index: entries.length,
+              animate: animate(),
+            }
+          : { type: "PUSH", entry, animate: animate() }
+      );
       return true;
     },
     [resolveOrNotify]
@@ -175,7 +190,12 @@ export function useStackNavigation(
       if (isLocked()) return false;
       const hit = resolveOrNotify(path);
       if (!hit) return false;
-      const entry = createEntry(hit, path, data);
+      const revivable = findRevivable(stateRef.current, path, {
+        includeRemovable: true,
+      });
+      const entry = revivable
+        ? { ...revivable, data }
+        : createEntry(hit, path, data);
       busyRef.current = true;
       dispatch({ type: "RESET_PUSH", entry, animate: animate() });
       // 루트로 되감은 뒤 push 해야 앞으로 가기 기록까지 정리된다
@@ -240,6 +260,25 @@ export function useStackNavigation(
           busyRef.current = true;
           dispatch({ type: "POP_TO", index, animate: animate() });
         }
+        return;
+      }
+      const cachedEntry = historyState.key
+        ? stateRef.current.cached.find((item) => item.key === historyState.key)
+        : undefined;
+      const targetIndex = historyState.index;
+      if (
+        cachedEntry &&
+        typeof targetIndex === "number" &&
+        targetIndex <= entries.length
+      ) {
+        busyRef.current = true;
+        dispatch({
+          type: "REVIVE",
+          entry: { ...cachedEntry, data: historyState.data },
+          direction: targetIndex === entries.length ? "push" : "pop",
+          index: targetIndex,
+          animate: animate(),
+        });
         return;
       }
       const hit = resolveOrNotify(historyState.path);

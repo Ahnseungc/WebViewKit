@@ -18,3 +18,6 @@ export const BRIDGE_HOST_WAIT_MS = 3000;
 
 /** 네이티브 브릿지 주입 재확인 간격 */
 export const BRIDGE_HOST_POLL_MS = 100;
+
+/** keepAlive 페이지 기본 최대 보관 수 (스택 안 keepAlive 포함) */
+export const KEEP_ALIVE_LIMIT = 5;

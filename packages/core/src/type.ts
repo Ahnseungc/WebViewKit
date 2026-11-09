@@ -5,6 +5,8 @@ export interface Activity {
   /** 정적 경로 또는 동적 세그먼트 패턴 (`/detail/:id`) */
   path: string;
   element: React.ReactNode;
+  /** true 면 스택에서 빠져도 인스턴스(state)를 보관했다가 같은 path 로 돌아오면 되살린다 */
+  keepAlive?: boolean;
 }
 
 export type StackTransitionType = "slide" | "fade" | "none";
@@ -24,6 +26,8 @@ export interface StackRouterProviderProps {
   duration?: number;
   /** 새로고침·딥링크 진입 시 스택 복원 정책 (기본 "with-root") */
   restoreStack?: RestoreStackPolicy;
+  /** keepAlive 페이지 최대 보관 수 (기본 KEEP_ALIVE_LIMIT, 0 이면 보관 안 함) */
+  keepAliveLimit?: number;
   /** env(safe-area-inset-*) padding 적용 */
   safeArea?: boolean;
   /** 루트에서 back 했을 때 (앱 종료·WebView 닫기 위임) */

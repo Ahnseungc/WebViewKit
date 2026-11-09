@@ -1,6 +1,6 @@
 import styled from "@emotion/styled";
 import React, { createContext, useContext, useMemo } from "react";
-import { STACK_TRANSITION_MS } from "../constants";
+import { KEEP_ALIVE_LIMIT, STACK_TRANSITION_MS } from "../constants";
 import { StackDevRoadmap } from "../stack-dev/stack-dev-roadmap";
 import type {
   Activity,
@@ -62,6 +62,7 @@ const StackRouterProvider = ({
   transition = "slide",
   duration = STACK_TRANSITION_MS,
   restoreStack = "with-root",
+  keepAliveLimit = KEEP_ALIVE_LIMIT,
   safeArea = false,
   onBackAtRoot,
   onNotFound,
@@ -76,6 +77,7 @@ const StackRouterProvider = ({
     activities: Activities,
     duration: effectiveDuration,
     restoreStack,
+    keepAliveLimit,
     onBackAtRoot,
     onNotFound,
   });
