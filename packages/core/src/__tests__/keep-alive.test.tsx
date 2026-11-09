@@ -51,9 +51,12 @@ const activities = [
     element: <Counter id="detail" />,
     keepAlive: true,
   },
+  { path: "/n1", element: <Counter id="n1" /> },
+  { path: "/n2", element: <Counter id="n2" /> },
+  { path: "/n3", element: <Counter id="n3" /> },
 ];
 
-const renderRouter = (keepAliveLimit?: number) =>
+const renderRouter = (keepAliveLimit?: number, maxMountedPages?: number) =>
   render(
     <StackRouterProvider
       initialActivity={activities[0]}
@@ -61,6 +64,7 @@ const renderRouter = (keepAliveLimit?: number) =>
       duration={TEST_DURATION_MS}
       enableDevTools={false}
       keepAliveLimit={keepAliveLimit}
+      maxMountedPages={maxMountedPages}
     />
   );
 
@@ -310,5 +314,94 @@ describe("보관 페이지 렌더", () => {
     await go(() => router.back());
 
     expect(screen.queryByTestId("list")).toBeNull();
+  });
+});
+
+describe("maxMountedPages", () => {
+  const pushDeep = async () => {
+    await go(() => router.push("/n1"));
+    await go(() => router.push("/n2"));
+    await go(() => router.push("/n3"));
+  };
+
+  it("깊이 4 에서 상한 2 면 아래쪽 일반 페이지는 언마운트된다", async () => {
+    renderRouter(undefined, 2);
+    await pushDeep();
+
+    expect(screen.queryByTestId("p1")).toBeNull();
+    expect(screen.queryByTestId("n1")).toBeNull();
+    expect(screen.getByTestId("n2")).toBeTruthy();
+    expect(screen.getByTestId("n3")).toBeTruthy();
+  });
+
+  it("back 으로 돌아오면 새로 마운트된다", async () => {
+    renderRouter(undefined, 2);
+    await go(() => router.push("/n1"));
+    click("n1", 2);
+    await go(() => router.push("/n2"));
+    await go(() => router.push("/n3"));
+    expect(screen.queryByTestId("n1")).toBeNull();
+
+    await go(() => router.back());
+    await go(() => router.back());
+
+    expect(count("n1")).toBe("0");
+  });
+
+  it("keepAlive 페이지는 상한 밖이어도 마운트를 유지한다", async () => {
+    renderRouter(undefined, 1);
+    await go(() => router.push("/list"));
+    click("list", 2);
+    await go(() => router.push("/n1"));
+    await go(() => router.push("/n2"));
+
+    expect(count("list")).toBe("2");
+    expect(screen.queryByTestId("p1")).toBeNull();
+  });
+
+  it("값이 1 미만이어도 top 은 마운트된다", async () => {
+    renderRouter(undefined, 0);
+    await go(() => router.push("/n1"));
+
+    expect(screen.getByTestId("n1")).toBeTruthy();
+  });
+
+  describe("개발 경고", () => {
+    const originalEnv = process.env.NODE_ENV;
+    const DEEP_PAGE_COUNT = 16;
+    const deepActivities = Array.from({ length: DEEP_PAGE_COUNT }, (_, i) => ({
+      path: `/d${i}`,
+      element: <Plain id={`d${i}`} />,
+    }));
+    let warn: jest.SpyInstance;
+
+    beforeEach(() => {
+      warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+      (process.env as Record<string, string>).NODE_ENV = "development";
+    });
+
+    afterEach(() => {
+      (process.env as Record<string, string>).NODE_ENV = originalEnv ?? "test";
+      warn.mockRestore();
+    });
+
+    it("마운트 수가 15 를 넘으면 한 번 경고한다", async () => {
+      render(
+        <StackRouterProvider
+          initialActivity={deepActivities[0]}
+          Activities={deepActivities}
+          duration={TEST_DURATION_MS}
+          enableDevTools={false}
+        />
+      );
+      for (let i = 1; i < DEEP_PAGE_COUNT; i += 1) {
+        await go(() => router.push(`/d${i}`));
+      }
+
+      const calls = warn.mock.calls.filter((args) =>
+        String(args[0]).includes("[webviewkit]")
+      );
+      expect(calls).toHaveLength(1);
+    });
   });
 });

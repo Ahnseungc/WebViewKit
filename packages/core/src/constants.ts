@@ -21,3 +21,6 @@ export const BRIDGE_HOST_POLL_MS = 100;
 
 /** keepAlive 페이지 기본 최대 보관 수 (스택 안 keepAlive 포함) */
 export const KEEP_ALIVE_LIMIT = 5;
+
+/** 마운트된 페이지가 이 수를 넘으면 개발 모드에서 한 번 경고 */
+export const DEV_MOUNTED_PAGES_WARN = 15;

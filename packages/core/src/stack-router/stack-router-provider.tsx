@@ -1,6 +1,16 @@
 import styled from "@emotion/styled";
-import React, { createContext, useContext, useMemo } from "react";
-import { KEEP_ALIVE_LIMIT, STACK_TRANSITION_MS } from "../constants";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+import {
+  DEV_MOUNTED_PAGES_WARN,
+  KEEP_ALIVE_LIMIT,
+  STACK_TRANSITION_MS,
+} from "../constants";
 import { StackDevRoadmap } from "../stack-dev/stack-dev-roadmap";
 import type {
   Activity,
@@ -53,6 +63,8 @@ export const useStackRouter = () => {
 const isDevEnv = () =>
   typeof process !== "undefined" && process.env?.NODE_ENV === "development";
 
+const MIN_MOUNTED_PAGES = 1;
+
 const StackRouterProvider = ({
   initialActivity,
   Activities = [],
@@ -63,6 +75,7 @@ const StackRouterProvider = ({
   duration = STACK_TRANSITION_MS,
   restoreStack = "with-root",
   keepAliveLimit = KEEP_ALIVE_LIMIT,
+  maxMountedPages,
   safeArea = false,
   onBackAtRoot,
   onNotFound,
@@ -124,6 +137,37 @@ const StackRouterProvider = ({
 
   const direction = state.transition?.type ?? "push";
   const pages = getRenderedPages(state);
+  const stackIndexByKey = new Map(
+    state.entries.map((entry, index) => [entry.key, index])
+  );
+  const mountLimit =
+    maxMountedPages === undefined
+      ? Infinity
+      : Math.max(MIN_MOUNTED_PAGES, maxMountedPages);
+  const shouldMount = (page: (typeof pages)[number]) => {
+    const stackIndex = stackIndexByKey.get(page.entry.key);
+    // cached·leaving(스택 밖)·전환 중 페이지, keepAlive 엔트리는 항상 마운트
+    if (stackIndex === undefined || page.entry.keepAlive) return true;
+    if (page.pageState === "enter" || page.pageState === "exit") return true;
+    return state.entries.length - stackIndex <= mountLimit;
+  };
+  const mountedCount = pages.filter(shouldMount).length;
+
+  const hasWarnedRef = useRef(false);
+  useEffect(() => {
+    if (
+      hasWarnedRef.current ||
+      !isDevEnv() ||
+      mountedCount <= DEV_MOUNTED_PAGES_WARN
+    ) {
+      return;
+    }
+    hasWarnedRef.current = true;
+    console.warn(
+      `[webviewkit] 마운트된 페이지가 ${mountedCount}개입니다. 메모리 사용이 커질 수 있으니 maxMountedPages 로 상한을 두세요.`
+    );
+  }, [mountedCount]);
+
   const showDevTools = enableDevTools ?? isDevEnv();
 
   return (
@@ -131,37 +175,40 @@ const StackRouterProvider = ({
       <LayoutContainer safeArea={safeArea}>
         <Layout maxWidth={maxWidth} data-testid="layout">
           <PageContainer>
-            {pages.map(({ entry, pageState, isTop }, index) => (
-              <ActivityContext.Provider
-                key={entry.key}
-                value={{
-                  key: entry.key,
-                  path: entry.path,
-                  pattern: entry.pattern,
-                  params: entry.params,
-                  query: entry.query,
-                  data: entry.data,
-                  index,
-                  isTop,
-                  isCached: pageState === "cached",
-                }}
-              >
-                <StackPage
-                  pageState={pageState}
-                  direction={direction}
-                  transitionType={transition}
-                  duration={effectiveDuration}
-                  zIndex={index}
-                  isTop={isTop}
-                  onAnimationEnd={
-                    pageState === "enter" ? endTransition : undefined
-                  }
+            {pages.map((page, index) => {
+              const { entry, pageState, isTop } = page;
+              return (
+                <ActivityContext.Provider
+                  key={entry.key}
+                  value={{
+                    key: entry.key,
+                    path: entry.path,
+                    pattern: entry.pattern,
+                    params: entry.params,
+                    query: entry.query,
+                    data: entry.data,
+                    index,
+                    isTop,
+                    isCached: pageState === "cached",
+                  }}
                 >
-                  {isShowHeader && <StackHeader />}
-                  {elementFor(entry.pattern)}
-                </StackPage>
-              </ActivityContext.Provider>
-            ))}
+                  <StackPage
+                    pageState={pageState}
+                    direction={direction}
+                    transitionType={transition}
+                    duration={effectiveDuration}
+                    zIndex={index}
+                    isTop={isTop}
+                    onAnimationEnd={
+                      pageState === "enter" ? endTransition : undefined
+                    }
+                  >
+                    {shouldMount(page) && isShowHeader && <StackHeader />}
+                    {shouldMount(page) ? elementFor(entry.pattern) : null}
+                  </StackPage>
+                </ActivityContext.Provider>
+              );
+            })}
           </PageContainer>
         </Layout>
       </LayoutContainer>

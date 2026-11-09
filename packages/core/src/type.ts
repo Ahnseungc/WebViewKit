@@ -28,6 +28,8 @@ export interface StackRouterProviderProps {
   restoreStack?: RestoreStackPolicy;
   /** keepAlive 페이지 최대 보관 수 (기본 KEEP_ALIVE_LIMIT, 0 이면 보관 안 함) */
   keepAliveLimit?: number;
+  /** 스택 top 에서부터 children 을 마운트할 최대 페이지 수 (기본 제한 없음, 1 미만은 1) */
+  maxMountedPages?: number;
   /** env(safe-area-inset-*) padding 적용 */
   safeArea?: boolean;
   /** 루트에서 back 했을 때 (앱 종료·WebView 닫기 위임) */
