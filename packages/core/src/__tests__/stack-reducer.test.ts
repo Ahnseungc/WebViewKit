@@ -226,4 +226,38 @@ describe("keep-alive 보관", () => {
     expect(state.cacheLimit).toBe(0);
     expect(state.cached).toEqual([]);
   });
+
+  it("전환 중 PUSH 가 와도 퇴장 중인 keepAlive 엔트리를 보관한다", () => {
+    let state = push(createStackState(entry("a"), 2), kept("b"));
+    state = stackReducer(state, { type: "POP_TO", index: 0, animate: true });
+    state = stackReducer(state, {
+      type: "PUSH",
+      entry: entry("d"),
+      animate: false,
+    });
+
+    expect(keys(state.cached)).toEqual(["b"]);
+  });
+
+  it("전환 중 RESET 이 와도 퇴장 중인 keepAlive 엔트리를 보관한다", () => {
+    let state = push(createStackState(entry("a"), 2), kept("b"));
+    state = stackReducer(state, { type: "POP_TO", index: 0, animate: true });
+    state = stackReducer(state, { type: "RESET", entry: entry("z") });
+
+    expect(keys(state.cached)).toEqual(["b"]);
+  });
+
+  it("전환 중 두 번째 애니메이션 POP_TO 도 먼저 퇴장한 엔트리를 보관한다", () => {
+    let state = createStackState(entry("a"), 3);
+    state = push(state, entry("b"));
+    state = push(state, kept("c"));
+    state = push(state, entry("d"));
+    state = stackReducer(state, { type: "POP_TO", index: 2, animate: true });
+    state = stackReducer(state, { type: "POP_TO", index: 0, animate: true });
+
+    expect(keys(state.cached)).toEqual([]);
+    state = stackReducer(state, { type: "END_TRANSITION" });
+
+    expect(keys(state.cached)).toEqual(["c"]);
+  });
 });

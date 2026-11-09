@@ -65,10 +65,39 @@ function cacheEntries(state: StackState, removed: StackEntry[]): StackEntry[] {
   return capacity > 0 ? merged.slice(-capacity) : [];
 }
 
+/** 퇴장 중이던 엔트리 중 결과 스택에 없는 것만 보관한다 (END_TRANSITION 과 공용) */
+function flushLeaving(state: StackState, nextEntries: StackEntry[]) {
+  const alive = new Set(nextEntries.map((entry) => entry.key));
+  const removed = state.leaving.filter((entry) => !alive.has(entry.key));
+  return cacheEntries({ ...state, entries: nextEntries }, removed);
+}
+
+const OVERWRITES_LEAVING = new Set<StackAction["type"]>([
+  "PUSH",
+  "POP_TO",
+  "RESET",
+  "RESET_PUSH",
+  "RESTORE",
+]);
+
 export function stackReducer(
   state: StackState,
   action: StackAction
 ): StackState {
+  if (!OVERWRITES_LEAVING.has(action.type) || state.leaving.length === 0) {
+    return reduce(state, action);
+  }
+  // 전환 중 다른 액션이 leaving 을 덮어쓰기 전에 퇴장 중인 keepAlive 를 보관한다
+  const settled = { ...state, leaving: [] };
+  const next = reduce(settled, action);
+  if (next === settled) return state;
+  return reduce(
+    { ...settled, cached: flushLeaving(state, next.entries) },
+    action
+  );
+}
+
+function reduce(state: StackState, action: StackAction): StackState {
   switch (action.type) {
     case "PUSH": {
       const previousTop = topOf(state.entries);
@@ -161,13 +190,11 @@ export function stackReducer(
     case "END_TRANSITION": {
       if (!state.transition && state.leaving.length === 0) return state;
       // resetPush 로 루트가 leaving 에 남은 경우처럼 스택에 아직 있는 엔트리는 보관하지 않는다
-      const inStack = new Set(state.entries.map((entry) => entry.key));
-      const removed = state.leaving.filter((entry) => !inStack.has(entry.key));
       return {
         ...state,
         leaving: [],
         transition: null,
-        cached: cacheEntries(state, removed),
+        cached: flushLeaving(state, state.entries),
       };
     }
     default:
