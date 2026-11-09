@@ -98,6 +98,25 @@ describe("StackHeader 전환", () => {
     expect(getComputedStyle(backSlot()!).position).toBe("absolute");
   });
 
+  it("깊은 스택에서 resetPush 하면 back 버튼은 페이드 없이 그대로 남는다", async () => {
+    renderRouter();
+    act(() => {
+      router.push("/p2");
+    });
+    await settle();
+    act(() => {
+      router.push("/p3");
+    });
+    await settle();
+
+    act(() => {
+      router.resetPush("/p2");
+    });
+
+    expect(titles()).toEqual(["/p2", "/p3"]);
+    expect(getComputedStyle(backSlot()!).animationName).toBe("");
+  });
+
   it("headerTransition=false 면 이전 제목을 그리지 않는다", () => {
     renderRouter({ headerTransition: false });
 

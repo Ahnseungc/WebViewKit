@@ -7,6 +7,7 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 ### Added
 
 - `StackHeader` 전환: push/back 시 제목이 페이지 방향으로 밀리며 크로스페이드, 루트 진입·복귀 시 back 버튼 페이드. `headerTransition={false}` 로 끔. `title` prop 을 지정하면 제목은 전환하지 않음
+- `useStackRouter().resetPush(path, data?)`: 루트만 남기고 `path` 를 push. 브라우저 history 도 `[루트, path]` 로 정리(앞으로 가기 기록 제거)
 
 ## [2.1.0] - 2026-11-04
 

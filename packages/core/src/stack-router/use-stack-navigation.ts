@@ -26,6 +26,7 @@ export interface StackNavigation {
   push: (path: string, data?: unknown) => boolean;
   replace: (path: string, data?: unknown) => boolean;
   reset: (path: string, data?: unknown) => boolean;
+  resetPush: (path: string, data?: unknown) => boolean;
   back: () => boolean;
   pop: (count?: number) => boolean;
   popTo: (path: string) => boolean;
@@ -144,6 +145,30 @@ export function useStackNavigation(
     [resolveOrNotify]
   );
 
+  // resetPush 가 history 를 루트로 되감을 때 오는 popstate 는 스택에 반영하지 않는다
+  const ignorePopRef = useRef(0);
+
+  const resetPush = useCallback(
+    (path: string, data?: unknown) => {
+      const { entries } = stateRef.current;
+      if (entries.length === 1) return push(path, data);
+      if (busyRef.current) return false;
+      const hit = resolveOrNotify(path);
+      if (!hit) return false;
+      const entry = createEntry(hit, path, data);
+      busyRef.current = true;
+      dispatch({ type: "RESET_PUSH", entry, animate: animate() });
+      // 루트로 되감은 뒤 push 해야 앞으로 가기 기록까지 정리된다
+      ignorePopRef.current += 1;
+      void history.travel(-(entries.length - 1)).then((popped) => {
+        if (!popped) ignorePopRef.current = 0;
+        history.push(path, { key: entry.key, index: 1, data });
+      });
+      return true;
+    },
+    [push, resolveOrNotify]
+  );
+
   const pop = useCallback((count: number = 1) => {
     if (busyRef.current) return false;
     const { entries } = stateRef.current;
@@ -184,6 +209,10 @@ export function useStackNavigation(
   // popstate (브라우저·하드웨어 back, forward, history.go)
   useEffect(() => {
     const onPop = (historyState: HistoryState) => {
+      if (ignorePopRef.current > 0) {
+        ignorePopRef.current -= 1;
+        return;
+      }
       const { entries } = stateRef.current;
       const index = historyState.key
         ? entries.findIndex((entry) => entry.key === historyState.key)
@@ -261,5 +290,15 @@ export function useStackNavigation(
     return () => clearTimeout(timer);
   }, [state, endTransition]);
 
-  return { state, push, replace, reset, back, pop, popTo, endTransition };
+  return {
+    state,
+    push,
+    replace,
+    reset,
+    resetPush,
+    back,
+    pop,
+    popTo,
+    endTransition,
+  };
 }

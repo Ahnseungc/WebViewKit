@@ -78,7 +78,8 @@ export default function App() {
 
 | hook | 반환 |
 |------|------|
-| `useStackRouter()` | `push`, `replace`, `reset`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `currentState`, `entries`, `isTransitioning` |
+| `useStackRouter()` | `push`, `replace`, `reset`, `resetPush`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `currentState`, `entries`, `isTransitioning` |
+| `useStackRouter().resetPush(path, data?)` | 루트만 남기고 `path` 를 push (스택 `[루트, path]`, push 슬라이드). 결제 완료 → 결과 화면처럼 중간 단계를 지울 때 |
 | `useActivity()` | 현재 페이지의 `{ key, path, pattern, params, query, data, index, isTop }` |
 | `useParams()` | `params` |
 

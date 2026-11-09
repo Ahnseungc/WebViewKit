@@ -404,3 +404,52 @@ describe("StackRouterProvider", () => {
     expect(screen.getByTestId("layout")).toHaveStyle({ maxWidth: "800px" });
   });
 });
+
+describe("resetPush", () => {
+  it("루트만 남기고 새 페이지를 push 한다", async () => {
+    renderRouter();
+    await pushAndSettle("/p2");
+    await pushAndSettle("/p3");
+
+    act(() => {
+      router.resetPush("/detail/7");
+    });
+
+    expect(pageStates()).toEqual(["p1:covered", "p3:exit", "detail:enter"]);
+    await settle();
+    await waitFor(() => expect(window.location.pathname).toBe("/detail/7"));
+    expect(router.entries.map((entry) => entry.path)).toEqual([
+      "/p1",
+      "/detail/7",
+    ]);
+    expect(pageStates()).toEqual(["p1:covered", "detail:idle"]);
+  });
+
+  it("resetPush 뒤 back 하면 루트로 돌아간다", async () => {
+    renderRouter();
+    await pushAndSettle("/p2");
+    await pushAndSettle("/p3");
+    act(() => {
+      router.resetPush("/detail/7");
+    });
+    await settle();
+    await waitFor(() => expect(window.location.pathname).toBe("/detail/7"));
+
+    await backAndSettle();
+
+    expect(pageStates()).toEqual(["p1:idle"]);
+    await waitFor(() => expect(window.location.pathname).toBe("/p1"));
+  });
+
+  it("루트에서 resetPush 는 push 와 같다", async () => {
+    renderRouter();
+
+    act(() => {
+      router.resetPush("/p2");
+    });
+    await settle();
+
+    expect(pageStates()).toEqual(["p1:covered", "p2:idle"]);
+    expect(window.location.pathname).toBe("/p2");
+  });
+});

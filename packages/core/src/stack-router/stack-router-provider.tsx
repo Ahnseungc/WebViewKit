@@ -36,6 +36,8 @@ export interface StackRouterContextValue {
   push: (path: string, data?: unknown) => boolean;
   replace: (path: string, data?: unknown) => boolean;
   reset: (path: string, data?: unknown) => boolean;
+  /** 루트만 남기고 path 를 push 한다 (스택: [루트, path]) */
+  resetPush: (path: string, data?: unknown) => boolean;
   back: () => boolean;
   pop: (count?: number) => boolean;
   popTo: (path: string) => boolean;
@@ -75,8 +77,8 @@ function getHeaderMotion(
     duration,
     exitKey,
     exitPath: exitEntry.path,
-    // push 전 깊이는 지금보다 1 작고, pop 전에는 항상 2 이상이었다
-    backWasVisible: transition.type === "pop" || entries.length > 2,
+    // 사라지는 페이지가 루트가 아니었으면 back 버튼이 보였다
+    backWasVisible: exitEntry.key !== entries[0].key,
   };
 }
 
@@ -140,6 +142,7 @@ const StackRouterProvider = ({
       push: navigation.push,
       replace: navigation.replace,
       reset: navigation.reset,
+      resetPush: navigation.resetPush,
       back: navigation.back,
       pop: navigation.pop,
       popTo: navigation.popTo,

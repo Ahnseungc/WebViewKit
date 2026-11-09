@@ -26,6 +26,7 @@ export type StackAction =
   | { type: "REPLACE"; entry: StackEntry }
   | { type: "POP_TO"; index: number; animate: boolean }
   | { type: "RESET"; entry: StackEntry }
+  | { type: "RESET_PUSH"; entry: StackEntry; animate: boolean }
   | { type: "RESTORE"; entries: StackEntry[] }
   | { type: "END_TRANSITION" };
 
@@ -79,6 +80,22 @@ export function stackReducer(
     }
     case "RESET":
       return createStackState(action.entry);
+    case "RESET_PUSH": {
+      // 루트만 남기고 새 엔트리를 쌓는다. 이전 top 은 퇴장 애니메이션 동안만 남긴다
+      const [root] = state.entries;
+      const previousTop = topOf(state.entries);
+      return {
+        entries: [root, action.entry],
+        leaving: action.animate ? [previousTop] : [],
+        transition: action.animate
+          ? {
+              type: "push",
+              enterKey: action.entry.key,
+              exitKey: previousTop.key,
+            }
+          : null,
+      };
+    }
     case "RESTORE":
       return { entries: action.entries, leaving: [], transition: null };
     case "END_TRANSITION":
@@ -97,7 +114,12 @@ export function getRenderedPages(
 ): { entry: StackEntry; pageState: PageState; isTop: boolean }[] {
   const { entries, leaving, transition } = state;
   const top = topOf(entries);
-  return [...entries, ...leaving].map((entry) => {
+  // push 중 퇴장하는 엔트리(resetPush)는 새 top 아래에 그린다
+  const ordered =
+    transition?.type === "push"
+      ? [...entries.slice(0, -1), ...leaving, top]
+      : [...entries, ...leaving];
+  return ordered.map((entry) => {
     const isTop = entry.key === top.key;
     let pageState: PageState = isTop ? "idle" : "covered";
     if (transition?.type === "push") {
