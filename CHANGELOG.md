@@ -2,6 +2,12 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
+## [2.2.1] - 2026-11-09
+
+### Fixed
+
+- push·replace 가 `history.state` 를 통째로 덮어써 다른 라우터의 키를 지우던 문제. Next.js App Router 에서 새로고침·딥링크로 들어온 뒤 back/forward 하면 `__NA` 가 없어 페이지 전체가 새로고침됐다. 이제 WebViewKit 키(`key`·`index`·`data`·`path`·`action`) 외의 키는 보존하고, push 는 현재 엔트리의 것을 이어 준다
+
 ## [2.2.0] - 2026-11-09
 
 ### Fixed
