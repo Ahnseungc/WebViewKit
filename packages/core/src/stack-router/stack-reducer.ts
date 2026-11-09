@@ -81,6 +81,11 @@ function cacheEntries(state: StackState, removed: StackEntry[]): StackEntry[] {
   return capacity > 0 ? merged.slice(-capacity) : [];
 }
 
+/** replace·reset 의 새 엔트리와 path 가 같은 보관본·지워질 엔트리는 버린다 */
+function withoutPath(list: StackEntry[], path: string): StackEntry[] {
+  return list.filter((entry) => entry.path !== path);
+}
+
 /** 퇴장 중이던 엔트리 중 결과 스택에 없는 것만 보관한다 (END_TRANSITION 과 공용) */
 function flushLeaving(state: StackState, nextEntries: StackEntry[]) {
   const alive = new Set(nextEntries.map((entry) => entry.key));
@@ -198,10 +203,14 @@ function reduce(state: StackState, action: StackAction): StackState {
     }
     case "REPLACE": {
       const entries = [...state.entries.slice(0, -1), action.entry];
+      const { path } = action.entry;
       return {
         ...state,
         entries,
-        cached: cacheEntries({ ...state, entries }, [topOf(state.entries)]),
+        cached: cacheEntries(
+          { ...state, entries, cached: withoutPath(state.cached, path) },
+          withoutPath([topOf(state.entries)], path)
+        ),
       };
     }
     case "POP_TO": {
@@ -231,11 +240,16 @@ function reduce(state: StackState, action: StackAction): StackState {
     }
     case "RESET": {
       const next = createStackState(action.entry, state.cacheLimit);
+      const { path } = action.entry;
       return {
         ...next,
         cached: cacheEntries(
-          { ...state, entries: next.entries },
-          state.entries
+          {
+            ...state,
+            entries: next.entries,
+            cached: withoutPath(state.cached, path),
+          },
+          withoutPath(state.entries, path)
         ),
       };
     }

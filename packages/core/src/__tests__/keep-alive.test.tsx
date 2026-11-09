@@ -233,6 +233,35 @@ describe("keepAlive 되살리기", () => {
     await expectConsistent(["/plain", "/list"]);
   });
 
+  it("replace 대상 path 의 보관본은 버리고 새로 마운트한다", async () => {
+    renderRouter();
+    await go(() => router.push("/list"));
+    click("list", 3);
+    await go(() => router.back());
+    await go(() => router.push("/plain"));
+
+    await go(() => router.replace("/list"));
+
+    expect(
+      screen.getAllByTestId("count-list").map((el) => el.textContent)
+    ).toEqual(["0"]);
+    await expectConsistent(["/p1", "/list"]);
+  });
+
+  it("reset 대상 path 의 보관본은 버리고 새로 마운트한다", async () => {
+    renderRouter();
+    await go(() => router.push("/list"));
+    click("list", 3);
+    await go(() => router.back());
+
+    await go(() => router.reset("/list"));
+
+    expect(
+      screen.getAllByTestId("count-list").map((el) => el.textContent)
+    ).toEqual(["0"]);
+    await expectConsistent(["/list"]);
+  });
+
   it("브라우저 forward 로 보관 key 에 닿으면 push 로 되살아난다", async () => {
     renderRouter();
     await go(() => router.push("/list"));

@@ -381,6 +381,31 @@ describe("keep-alive 되살리기", () => {
     expect(state.cached).toEqual([]);
   });
 
+  it("REPLACE·RESET 은 대상 path 의 보관본을 버린다", () => {
+    const fresh = { ...kept("b"), key: "b2" };
+    const replaced = stackReducer(cachedState(), {
+      type: "REPLACE",
+      entry: fresh,
+    });
+    expect(keys(replaced.entries)).toEqual(["b2"]);
+    expect(replaced.cached).toEqual([]);
+
+    const reset = stackReducer(cachedState(), { type: "RESET", entry: fresh });
+    expect(keys(reset.entries)).toEqual(["b2"]);
+    expect(reset.cached).toEqual([]);
+  });
+
+  it("REPLACE 로 지워지는 top 이 대상과 같은 path 면 보관하지 않는다", () => {
+    let state = push(createStackState(entry("a"), 3), kept("b"));
+    state = stackReducer(state, {
+      type: "REPLACE",
+      entry: { ...kept("b"), key: "b2" },
+    });
+
+    expect(keys(state.entries)).toEqual(["a", "b2"]);
+    expect(state.cached).toEqual([]);
+  });
+
   it("REVIVE 는 되살린 엔트리의 revision 을 올린다", () => {
     let state = stackReducer(cachedState(), {
       type: "REVIVE",
