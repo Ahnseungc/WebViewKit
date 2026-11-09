@@ -55,7 +55,7 @@ const activities = [
 - `Activity.keepAlive?: boolean` (기본 false)
 - `StackRouterProviderProps.keepAliveLimit?: number` (기본 `KEEP_ALIVE_LIMIT = 5`, 상수로 export). 0 이면 기능 꺼짐.
 - `useActivity()` 에 `isCached: boolean` 추가. 보관 중(숨김)일 때 true.
-- `useOnRevive(callback)`: 이 페이지가 보관 상태에서 되살아나 top 이 될 때 호출. 인자로 새 push 의 `data`.
+- `useOnRevive(callback)`: 이 페이지가 보관 상태에서 되살아나 top 이 될 때 호출. 인자로 새 push 의 `data`. `resetPush` 가 스택 안 인스턴스를 재사용할 때도 호출한다(엔트리 `revision` 증가로 판단, `useActivity().revision`).
 
 ## 동작
 

@@ -48,7 +48,7 @@ export default function App() {
 
 | 상황 | 동작 |
 |------|------|
-| `push(path)` | 항상 새 엔트리. 전환 중이면 무시(`false`) |
+| `push(path)` | 새 엔트리를 쌓는다. 단 `keepAlive` 페이지의 캐시본이 같은 path 로 있으면 그 인스턴스를 되살린다. 전환 중이면 무시(`false`) |
 | 같은 path 다시 push | 새 인스턴스가 쌓인다. 기존 페이지로 가려면 `popTo(path)`. 단 `keepAlive` 페이지는 캐시된 인스턴스가 되살아난다 |
 | 브라우저·하드웨어 back | popstate 로 스택 pop (URL·화면 항상 일치) |
 | 루트에서 `back()` | history 를 건드리지 않고 `onBackAtRoot()` |
@@ -62,9 +62,9 @@ export default function App() {
 | prop | 기본 | 설명 |
 |------|------|------|
 | `initialActivity` | — | 루트 페이지. 마운트 시 1회만 읽음 |
-| `Activities` | `[]` | `{ path, element, keepAlive? }[]`. path 에 `:param` 사용 가능. `keepAlive: true` 면 pop 뒤에도 마운트 유지(스크롤·입력·state 보존), 같은 path(pathname+search) push 시 되살림. replace·reset 은 되살리지 않음 |
-| `keepAliveLimit` | `5` (`KEEP_ALIVE_LIMIT`) | 캐시할 keepAlive 페이지 최대 개수(스택 위 keepAlive 페이지 포함). `0` 이면 끔. 마운트 시 1회만 읽음 |
-| `maxMountedPages` | 무제한 | 동시 마운트 페이지 상한(1 미만은 1). keepAlive·전환 중 페이지는 항상 마운트, 그 외는 back 시 새로 마운트. 15개 초과 시 dev 경고 |
+| `Activities` | `[]` | `{ path, element, keepAlive? }[]`. path 에 `:param` 사용 가능. `keepAlive: true` 면 pop 뒤에도 마운트 유지(스크롤·입력·state 보존), 같은 path(pathname+search) push 시 되살림. replace·reset 은 되살리지 않고 대상 path 의 캐시본을 버림 |
+| `keepAliveLimit` | `5` (`KEEP_ALIVE_LIMIT`) | 캐시할 keepAlive 페이지 최대 개수(스택 위 keepAlive 페이지 포함). `0` 이면 끔(`keepAlive` 라우트도 일반 페이지처럼 동작). 마운트 시 1회만 읽음 |
+| `maxMountedPages` | 무제한 | 동시 마운트 페이지 상한(1 미만은 1, 유한한 수가 아니면 무제한). 스택 안·캐시된 keepAlive 페이지는 상한과 무관하게 언마운트하지 않으므로 keepAlive 페이지가 많으면 상한보다 많이 마운트될 수 있다(`keepAliveLimit` 으로 제한). 전환 중 페이지도 마운트하되, 언마운트돼 있던 페이지는 퇴장 슬라이드를 위해 다시 마운트하지 않는다. 그 외는 back 시 새로 마운트. 15개 초과 시 dev 경고 |
 | `transition` | `"slide"` | `"slide"`(iOS 네이티브 스택: 패럴랙스·dim·가장자리 그림자) · `"fade"` · `"none"` |
 | `duration` | `500` | 전환 ms |
 | `restoreStack` | `"with-root"` | 딥링크 복원 정책 |
@@ -81,8 +81,8 @@ export default function App() {
 |------|------|
 | `useStackRouter()` | `push`, `replace`, `reset`, `resetPush`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `currentState`, `entries`, `isTransitioning` |
 | `useStackRouter().resetPush(path, data?)` | 루트만 남기고 `path` 를 push (스택 `[루트, path]`, push 슬라이드). 결제 완료 → 결과 화면처럼 중간 단계를 지울 때 |
-| `useActivity()` | 현재 페이지의 `{ key, path, pattern, params, query, data, index, isTop, isCached }`. `isCached` 는 keepAlive 로 숨겨진 상태 |
-| `useOnRevive(callback)` | 캐시된 페이지가 되살아날 때 `callback(data)` 1회 호출(최초 마운트 제외). 새 `data` 로 화면을 갱신할 때 |
+| `useActivity()` | 현재 페이지의 `{ key, path, pattern, params, query, data, index, isTop, isCached, revision }`. `index` 는 스택 위치(0 = 루트, 캐시 중이면 `-1`). `isCached` 는 keepAlive 로 숨겨진 상태. `revision` 은 인스턴스가 새 `data` 로 재사용된 횟수 |
+| `useOnRevive(callback)` | 기존 인스턴스가 새 `data` 로 재사용될 때마다 `callback(data)` 1회 호출: 캐시된 페이지가 되살아날 때, `resetPush` 가 스택 안 keepAlive 인스턴스를 재사용할 때. 최초 마운트에는 호출 안 함. 새 `data` 로 화면을 갱신할 때 |
 | `useParams()` | `params` |
 
 테마는 CSS 변수로 바꿉니다: `--wvk-page-bg`, `--wvk-dim-color`, `--wvk-edge-shadow`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.

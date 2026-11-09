@@ -16,10 +16,10 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
 ### Added
 
-- `Activity.keepAlive`: 켠 페이지는 pop 돼도 마운트된 채(`visibility: hidden`) 캐시되고, 같은 `path`(pathname+search)로 push 하면 그 인스턴스가 되살아남(스크롤·입력·state 유지). resetPush 대상과 브라우저 앞으로/뒤로 가기도 되살림. replace·reset 은 되살리지 않음
-- Provider `keepAliveLimit`(기본 `KEEP_ALIVE_LIMIT` = 5, `0` 이면 끔): 캐시 페이지 최대 개수. 마운트 시 1회만 읽음
-- Provider `maxMountedPages`(기본 무제한): 동시에 마운트할 페이지 상한. keepAlive·전환 중 페이지는 항상 마운트, 나머지는 back 시 새로 마운트. 마운트가 15개를 넘으면 dev 경고
-- `useActivity().isCached` 와 `useOnRevive(callback)`: 캐시된 페이지가 되살아날 때 1회 호출(최초 마운트에는 호출 안 됨)
+- `Activity.keepAlive`: 켠 페이지는 pop 돼도 마운트된 채(`visibility: hidden`) 캐시되고, 같은 `path`(pathname+search)로 push 하면 그 인스턴스가 되살아남(스크롤·입력·state 유지). resetPush 대상과 브라우저 앞으로/뒤로 가기도 되살림. replace·reset 은 되살리지 않고 대상 path 의 캐시본을 버림
+- Provider `keepAliveLimit`(기본 `KEEP_ALIVE_LIMIT` = 5, `0` 이면 끔): 캐시 페이지 최대 개수. `0` 이면 keepAlive 라우트도 일반 페이지로 동작. 마운트 시 1회만 읽음
+- Provider `maxMountedPages`(기본 무제한): 동시에 마운트할 페이지 상한. keepAlive 페이지는 언마운트하지 않고, 전환 중 페이지는 마운트하되 언마운트돼 있던 퇴장 페이지는 다시 마운트하지 않음. 나머지는 back 시 새로 마운트. 마운트가 15개를 넘으면 dev 경고
+- `useActivity().isCached`·`revision` 과 `useOnRevive(callback)`: 캐시된 페이지가 되살아나거나 resetPush 가 스택 안 인스턴스를 재사용할 때 1회 호출(최초 마운트에는 호출 안 됨)
 - `KEEP_ALIVE_LIMIT`, `useOnRevive` export
 - `useStackRouter().resetPush(path, data?)`: 루트만 남기고 `path` 를 push. 브라우저 history 도 `[루트, path]` 로 정리(앞으로 가기 기록 제거)
 
