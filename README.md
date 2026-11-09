@@ -36,6 +36,7 @@ git tag v2.0.0 && git push origin v2.0.0
 | 2025-05-31 | stack-router 구조·테스트 |
 | 2026-05-25 | v1.1.0 — dev roadmap, 빌드/npm 수정, gsap 제거 |
 | 2026-11-04 | v2.0.0 — 스택 라우터 재구현, 브릿지 응답·URL 검증, ESM, CI |
+| 2026-11-09 | v2.2.0 — keep-alive(페이지 보존), resetPush, 페이지별 헤더, reset history 정리 |
 
 자세한 변경: [CHANGELOG.md](./CHANGELOG.md) · [packages/core/README.md](./packages/core/README.md) · [PRD](./docs/prd/webviewkit-v2-prd.md) · [v2 스펙](./docs/specs/webviewkit-v2/spec.md)
 
