@@ -447,6 +447,31 @@ describe("maxMountedPages", () => {
     expect(screen.queryByTestId("p1")).toBeNull();
   });
 
+  it("언마운트돼 있던 페이지는 pop 으로 퇴장할 때 다시 마운트하지 않는다", async () => {
+    renderRouter(undefined, 2);
+    await pushDeep();
+    expect(mounts.n1).toBe(1);
+
+    act(() => {
+      router.pop(3);
+    });
+
+    expect(screen.queryByTestId("n1")).toBeNull();
+    expect(screen.getByTestId("n3")).toBeTruthy();
+    await wait(HISTORY_SETTLE_MS);
+    await waitFor(() => expect(router.isTransitioning).toBe(false));
+    expect(mounts.n1).toBe(1);
+    expect(mounts.n2).toBe(1);
+  });
+
+  it("값이 NaN 이면 제한 없음으로 본다", async () => {
+    renderRouter(undefined, Number.NaN);
+    await pushDeep();
+
+    expect(screen.getByTestId("p1")).toBeTruthy();
+    expect(screen.getByTestId("n1")).toBeTruthy();
+  });
+
   it("값이 1 미만이어도 top 은 마운트된다", async () => {
     renderRouter(undefined, 0);
     await go(() => router.push("/n1"));

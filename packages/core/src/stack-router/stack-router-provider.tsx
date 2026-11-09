@@ -154,17 +154,27 @@ const StackRouterProvider = ({
       : state.entries.length + leavingIndex;
   };
   const mountLimit =
-    maxMountedPages === undefined
+    maxMountedPages === undefined || !Number.isFinite(maxMountedPages)
       ? Infinity
       : Math.max(MIN_MOUNTED_PAGES, maxMountedPages);
+  // 직전 렌더에서 마운트돼 있던 key. 퇴장 페이지를 슬라이드만 하려고 새로 마운트하지 않기 위함
+  const mountedKeysRef = useRef<Set<string>>(new Set());
+  const wasMounted = mountedKeysRef.current;
   const shouldMount = (page: (typeof pages)[number]) => {
-    const stackIndex = stackIndexByKey.get(page.entry.key);
-    // cached·leaving(스택 밖)·전환 중 페이지, keepAlive 엔트리는 항상 마운트
-    if (stackIndex === undefined || page.entry.keepAlive) return true;
-    if (page.pageState === "enter" || page.pageState === "exit") return true;
+    const { entry, pageState } = page;
+    // cached 페이지와 keepAlive 엔트리는 항상 마운트
+    if (pageState === "cached" || entry.keepAlive) return true;
+    const stackIndex = stackIndexByKey.get(entry.key);
+    // 스택 밖(퇴장 중) 페이지는 이미 마운트돼 있던 경우에만 유지
+    if (stackIndex === undefined) return wasMounted.has(entry.key);
+    if (pageState === "enter" || pageState === "exit") return true;
     return state.entries.length - stackIndex <= mountLimit;
   };
-  const mountedCount = pages.filter(shouldMount).length;
+  const mountedKeys = new Set(
+    pages.filter(shouldMount).map((page) => page.entry.key)
+  );
+  mountedKeysRef.current = mountedKeys;
+  const mountedCount = mountedKeys.size;
 
   // DOM 이동은 스크롤 위치를 초기화하므로 key 의 최초 렌더 순서로 DOM 순서를 고정한다.
   // 쌓임 순서는 getRenderedPages 위치(zIndex)로 표현한다.
@@ -233,8 +243,12 @@ const StackRouterProvider = ({
                       pageState === "enter" ? endTransition : undefined
                     }
                   >
-                    {shouldMount(page) && isShowHeader && <StackHeader />}
-                    {shouldMount(page) ? elementFor(entry.pattern) : null}
+                    {mountedKeys.has(entry.key) && isShowHeader && (
+                      <StackHeader />
+                    )}
+                    {mountedKeys.has(entry.key)
+                      ? elementFor(entry.pattern)
+                      : null}
                   </StackPage>
                 </ActivityContext.Provider>
               );
