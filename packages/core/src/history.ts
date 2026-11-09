@@ -9,6 +9,21 @@ const listeners = new Set<HistoryListener>();
 
 const currentPath = () => window.location.pathname + window.location.search;
 
+/** WebViewKit 이 history.state 에 쓰는 키 */
+const OWN_STATE_KEYS = new Set(["key", "index", "data", "path", "action"]);
+
+/**
+ * 현재 엔트리에서 다른 라우터가 남긴 키만 추린다.
+ * Next.js App Router 는 `__NA` 가 없는 엔트리로 back/forward 하면 페이지를 새로고침하므로 덮어쓰면 안 된다.
+ */
+function foreignState(): Record<string, unknown> {
+  const current: unknown = window.history.state;
+  if (!current || typeof current !== "object") return {};
+  return Object.fromEntries(
+    Object.entries(current).filter(([key]) => !OWN_STATE_KEYS.has(key))
+  );
+}
+
 const onPopState = (event: PopStateEvent) => {
   const state: HistoryState = {
     path: currentPath(),
@@ -28,7 +43,7 @@ export const history = {
   push: (path: string, state: HistoryEntryState = {}) => {
     if (!isBrowser()) return;
     window.history.pushState(
-      { ...state, path, action: HistoryAction.PUSH },
+      { ...foreignState(), ...state, path, action: HistoryAction.PUSH },
       "",
       path
     );
@@ -37,7 +52,7 @@ export const history = {
   replace: (path: string, state: HistoryEntryState = {}) => {
     if (!isBrowser()) return;
     window.history.replaceState(
-      { ...state, path, action: HistoryAction.REPLACE },
+      { ...foreignState(), ...state, path, action: HistoryAction.REPLACE },
       "",
       path
     );

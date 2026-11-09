@@ -27,6 +27,39 @@ describe("history", () => {
     });
   });
 
+  it("replace 는 다른 라우터가 남긴 state 키를 보존한다 (Next.js App Router __NA)", () => {
+    window.history.replaceState({ __NA: true, tree: ["root"] }, "", "/");
+
+    history.replace("/a", { key: "k1", index: 0 });
+
+    expect(window.history.state).toEqual({
+      __NA: true,
+      tree: ["root"],
+      key: "k1",
+      index: 0,
+      path: "/a",
+      action: HistoryAction.REPLACE,
+    });
+  });
+
+  it("push 는 현재 엔트리의 다른 라우터 state 키를 새 엔트리로 이어 준다", () => {
+    window.history.replaceState(
+      { __NA: true, key: "old", index: 0, data: { x: 1 } },
+      "",
+      "/"
+    );
+
+    history.push("/b", { key: "k2", index: 1 });
+
+    expect(window.history.state).toEqual({
+      __NA: true,
+      key: "k2",
+      index: 1,
+      path: "/b",
+      action: HistoryAction.PUSH,
+    });
+  });
+
   it("replace 는 현재 엔트리를 교체한다", () => {
     const length = window.history.length;
     history.replace("/replaced", { key: "k2", index: 0 });
