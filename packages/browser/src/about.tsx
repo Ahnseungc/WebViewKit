@@ -1,14 +1,29 @@
-import { useStackRouter } from "@ahnseungchan/webviewkit";
+import { StackHeader, useStackRouter } from "@ahnseungchan/webviewkit";
+
+import { href } from "./base";
 
 const About = () => {
   const { back, push } = useStackRouter();
 
   return (
-    <main style={{ padding: 16 }}>
-      <h2>About</h2>
-      <button onClick={() => push("/detail/99")}>Detail 99</button>
-      <button onClick={() => back()}>Back</button>
-    </main>
+    <>
+      <StackHeader title="About" />
+      <main className="page">
+        <h2>About</h2>
+        <p className="lead">
+          Every push adds a history entry, so browser and hardware back work
+          too.
+        </p>
+        <div className="card">
+          <button className="row" onClick={() => push(href("/detail/99"))}>
+            Detail 99
+          </button>
+          <button className="row" onClick={() => back()}>
+            Back
+          </button>
+        </div>
+      </main>
+    </>
   );
 };
 

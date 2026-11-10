@@ -1,0 +1,23 @@
+:root {
+  --wvk-page-bg: #f2f2f7;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #1c1c1e;
+  background: #f2f2f7;
+  -webkit-font-smoothing: antialiased;
+}
+body { margin: 0; }
+.page { padding: 20px 16px 40px; display: flex; flex-direction: column; gap: 16px; }
+.page h2 { margin: 0; font-size: 28px; }
+.lead { margin: 0; color: #6e6e73; line-height: 1.5; }
+.card { background: #fff; border-radius: 14px; overflow: hidden; }
+.row {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; padding: 14px 16px; border: 0; background: none;
+  font: inherit; font-size: 17px; color: inherit; text-align: left; cursor: pointer;
+}
+.row + .row { border-top: 1px solid #e5e5ea; }
+.row:active { background: #e5e5ea; }
+.row::after { content: "›"; color: #c7c7cc; font-size: 22px; }
+.hint { margin: 0 4px; font-size: 13px; color: #6e6e73; }
+.field { padding: 12px 16px; border: 0; width: 100%; box-sizing: border-box; font: inherit; font-size: 17px; }
+.github { color: #007aff; text-decoration: none; font-size: 15px; }

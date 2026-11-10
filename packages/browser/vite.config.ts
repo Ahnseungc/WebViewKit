@@ -3,6 +3,8 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  // GitHub Pages 는 /WebViewKit/ 하위에 배포한다 (.github/workflows/pages.yml)
+  base: process.env.DEMO_BASE ?? "/",
   plugins: [react({ jsxImportSource: "@emotion/react" })],
   resolve: {
     alias: {

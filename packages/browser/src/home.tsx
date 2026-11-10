@@ -1,23 +1,46 @@
-import { useStackRouter } from "@ahnseungchan/webviewkit";
+import { StackHeader, useStackRouter } from "@ahnseungchan/webviewkit";
+
+import { href } from "./base";
 
 const Home = () => {
   const { push, resetPush } = useStackRouter();
 
   return (
-    <main style={{ padding: 16 }}>
-      <h2>Home</h2>
-      <button onClick={() => push("/about")}>Go to About</button>
-      <ul>
-        {[1, 2, 3].map((id) => (
-          <li key={id}>
-            <button onClick={() => push(`/detail/${id}?tab=info`, { id })}>
+    <>
+      <StackHeader title="WebViewKit" />
+      <main className="page">
+        <h2>WebViewKit</h2>
+        <p className="lead">
+          Native-like stack navigation for React in WebViews. Tap a row, then
+          swipe or press back.
+        </p>
+        <div className="card">
+          {[1, 2, 3].map((id) => (
+            <button
+              key={id}
+              className="row"
+              onClick={() => push(href(`/detail/${id}?tab=info`), { id })}
+            >
               Detail {id}
             </button>
-          </li>
-        ))}
-      </ul>
-      <button onClick={() => resetPush("/detail/1")}>Reset + Detail 1</button>
-    </main>
+          ))}
+          <button className="row" onClick={() => push(href("/about"))}>
+            About
+          </button>
+        </div>
+        <p className="hint">
+          resetPush clears the stack and pushes one page on top of the root.
+        </p>
+        <div className="card">
+          <button className="row" onClick={() => resetPush(href("/detail/1"))}>
+            Reset + Detail 1
+          </button>
+        </div>
+        <a className="github" href="https://github.com/Ahnseungc/WebViewKit">
+          GitHub · npm i @ahnseungchan/webviewkit
+        </a>
+      </main>
+    </>
   );
 };
 

@@ -1,4 +1,11 @@
-import { useActivity, useParams, useStackRouter } from "@ahnseungchan/webviewkit";
+import {
+  StackHeader,
+  useActivity,
+  useParams,
+  useStackRouter,
+} from "@ahnseungchan/webviewkit";
+
+import { href } from "./base";
 
 const Detail = () => {
   const { id } = useParams<{ id: string }>();
@@ -7,23 +14,47 @@ const Detail = () => {
   const nextId = Number(id) + 1;
 
   return (
-    <main style={{ padding: 16 }}>
-      <h2>Detail {id}</h2>
-      <p>
-        tab: {query.tab ?? "-"} · depth: {depth}
-      </p>
-      <button onClick={() => push(`/detail/${nextId}`)}>Next ({nextId})</button>
-      <button onClick={() => popTo("/")}>Pop to Home</button>
-      <button onClick={() => reset("/")}>Reset</button>
-      <div>
-        <input placeholder="keepAlive 확인용 입력" aria-label="keepAlive 확인용 입력" />
-      </div>
-      <ul>
-        {Array.from({ length: 50 }, (_, i) => (
-          <li key={i}>Row {i + 1}</li>
-        ))}
-      </ul>
-    </main>
+    <>
+      <StackHeader title={`Detail ${id}`} />
+      <main className="page">
+        <h2>Detail {id}</h2>
+        <p className="lead">
+          tab: {query.tab ?? "-"} · depth: {depth}
+        </p>
+        <div className="card">
+          <button
+            className="row"
+            onClick={() => push(href(`/detail/${nextId}`))}
+          >
+            Next ({nextId})
+          </button>
+          <button className="row" onClick={() => popTo(href("/"))}>
+            Pop to Home
+          </button>
+          <button className="row" onClick={() => reset(href("/"))}>
+            Reset
+          </button>
+        </div>
+        <p className="hint">
+          keepAlive: type here, go back, open this page again. The text is still
+          there.
+        </p>
+        <div className="card">
+          <input
+            className="field"
+            placeholder="Type something"
+            aria-label="keepAlive test input"
+          />
+        </div>
+        <div className="card">
+          {Array.from({ length: 30 }, (_, i) => (
+            <div key={i} className="row">
+              Row {i + 1}
+            </div>
+          ))}
+        </div>
+      </main>
+    </>
   );
 };
 
