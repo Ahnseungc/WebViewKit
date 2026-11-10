@@ -1,7 +1,7 @@
 {
   "name": "@ahnseungchan/webviewkit",
   "version": "2.4.0",
-  "description": "Stack navigation and native WebView bridge (RN/Flutter) for React hybrid apps",
+  "description": "Native-like stack navigation (iOS-style push/back) and a React Native / Flutter bridge for React apps in WebViews",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -36,7 +36,15 @@
     "react",
     "mobile",
     "router",
-    "react-native-webview"
+    "react-native-webview",
+    "hybrid-app",
+    "webview-navigation",
+    "flutter",
+    "flutter-inappwebview",
+    "ios-transition",
+    "page-transition",
+    "keep-alive",
+    "nextjs"
   ],
   "author": "Seungchan Ahn <omnipoo@naver.com>",
   "license": "MIT",
