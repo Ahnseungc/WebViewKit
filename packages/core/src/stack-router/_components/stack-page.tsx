@@ -118,6 +118,9 @@ const PageWrapper = styled.div<PageWrapperProps>`
 
 interface StackPageProps extends PageWrapperProps {
   isTop: boolean;
+  /** 커밋 중 이 페이지에 시작 대기 중인 CSS 애니메이션이 있으면 호출 (Web Animations API 지원 시) */
+  onAnimationPending?: () => void;
+  onAnimationStart?: () => void;
   onAnimationEnd?: () => void;
   children: React.ReactNode;
 }
@@ -125,6 +128,8 @@ interface StackPageProps extends PageWrapperProps {
 /** 스택 한 장. top 이 아니면 inert·aria-hidden (스크린리더·포커스 차단) */
 export default function StackPage({
   isTop,
+  onAnimationPending,
+  onAnimationStart,
   onAnimationEnd,
   children,
   ...wrapperProps
@@ -136,17 +141,31 @@ export default function StackPage({
     ref.current?.toggleAttribute("inert", !isTop);
   }, [isTop]);
 
+  const { pageState, direction } = wrapperProps;
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element || !onAnimationPending) return;
+    if (typeof element.getAnimations !== "function") return;
+    // subtree 없이 부르면 dim(::after) 은 빠지고 페이지 자체 애니메이션만 온다
+    if (element.getAnimations().length > 0) onAnimationPending();
+    // 전환(상태·방향)이 바뀔 때만 확인한다
+  }, [pageState, direction]);
+
+  /** dim(::after) 애니메이션은 무시하고 페이지 자체 전환만 본다 */
+  const isOwnAnimation = (event: React.AnimationEvent<HTMLDivElement>) =>
+    event.target === event.currentTarget && !event.pseudoElement;
+
   return (
     <PageWrapper
       ref={ref}
       {...wrapperProps}
       data-state={wrapperProps.pageState}
       aria-hidden={isTop ? undefined : true}
+      onAnimationStart={(event) => {
+        if (isOwnAnimation(event)) onAnimationStart?.();
+      }}
       onAnimationEnd={(event) => {
-        // dim(::after) 애니메이션 종료는 무시하고 페이지 자체 전환만 본다
-        if (event.target === event.currentTarget && !event.pseudoElement) {
-          onAnimationEnd?.();
-        }
+        if (isOwnAnimation(event)) onAnimationEnd?.();
       }}
     >
       {children}

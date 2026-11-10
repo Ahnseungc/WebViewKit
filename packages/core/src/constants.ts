@@ -7,6 +7,13 @@ export const STACK_TRANSITION_MS = 500;
 /** 전환 종료 안전 타이머 여유 (animationend 누락 대비) */
 export const TRANSITION_END_GRACE_MS = 50;
 
+/**
+ * 전환 CSS 애니메이션이 시작되기를 기다리는 최대 시간 (ms, duration 에 더함).
+ * 안전 타이머는 animationstart 부터 duration + TRANSITION_END_GRACE_MS 로 다시 잰다.
+ * 커밋 시점부터 재면 콜드 스타트 첫 push 처럼 첫 프레임이 늦을 때 애니메이션 시작 전에 전환이 끝나 버린다
+ */
+export const TRANSITION_START_TIMEOUT_MS = 1000;
+
 /** `history.back()` 이 popstate 를 기다리는 최대 시간 */
 export const BACK_TIMEOUT_MS = 1000;
 

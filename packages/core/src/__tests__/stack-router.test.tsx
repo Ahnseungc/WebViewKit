@@ -6,6 +6,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import React, { useState } from "react";
+import {
+  TRANSITION_END_GRACE_MS,
+  TRANSITION_START_TIMEOUT_MS,
+} from "../constants";
 import { useActivity, useParams } from "../stack-router/activity-context";
 import StackRouterProvider, {
   type StackRouterContextValue,
@@ -523,5 +527,96 @@ describe("popStateTransition", () => {
     expect(pageStates()).toEqual(["p1:enter", "p2:exit"]);
     await settle();
     expect(pageStates()).toEqual(["p1:idle"]);
+  });
+});
+
+describe("전환 안전 타이머", () => {
+  const GRACE_MS = TRANSITION_END_GRACE_MS;
+  const START_TIMEOUT_MS = TRANSITION_START_TIMEOUT_MS;
+  const MARGIN_MS = 5;
+  const proto = HTMLElement.prototype as unknown as {
+    getAnimations?: () => unknown[];
+  };
+  const original = proto.getAnimations;
+
+  /** 실제 브라우저처럼 전환 중인 페이지에 시작 대기 애니메이션이 있다고 알린다 */
+  const mockPendingAnimation = () => {
+    proto.getAnimations = function (this: HTMLElement) {
+      const state = this.getAttribute("data-state");
+      return state === "enter" || state === "exit" ? [{}] : [];
+    };
+  };
+
+  const advance = (ms: number) => {
+    act(() => {
+      jest.advanceTimersByTime(ms);
+    });
+  };
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    if (original) proto.getAnimations = original;
+    else delete proto.getAnimations;
+  });
+
+  it("jsdom 에는 Web Animations API 가 없다 (아래 폴백 테스트 전제)", () => {
+    expect(original).toBeUndefined();
+  });
+
+  it("animationstart 전에는 커밋 기준 duration+grace 가 지나도 끝나지 않는다", () => {
+    mockPendingAnimation();
+    renderRouter();
+
+    act(() => {
+      router.push("/p2");
+    });
+    advance(TEST_DURATION_MS + GRACE_MS + MARGIN_MS);
+
+    expect(router.isTransitioning).toBe(true);
+    expect(pageStates()).toEqual(["p1:exit", "p2:enter"]);
+  });
+
+  it("animationstart 뒤에는 그때부터 duration+grace 에 끝난다", () => {
+    mockPendingAnimation();
+    renderRouter();
+    act(() => {
+      router.push("/p2");
+    });
+    advance(TEST_DURATION_MS + GRACE_MS + MARGIN_MS);
+
+    fireEvent.animationStart(wrapperOf("p2"));
+    advance(TEST_DURATION_MS + GRACE_MS - MARGIN_MS);
+    expect(router.isTransitioning).toBe(true);
+
+    advance(MARGIN_MS * 2);
+    expect(router.isTransitioning).toBe(false);
+    expect(pageStates()).toEqual(["p1:covered", "p2:idle"]);
+  });
+
+  it("시작 대기 애니메이션이 끝내 시작하지 않으면 duration+시작 대기 시간에 끝낸다", () => {
+    mockPendingAnimation();
+    renderRouter();
+    act(() => {
+      router.push("/p2");
+    });
+
+    advance(TEST_DURATION_MS + START_TIMEOUT_MS - MARGIN_MS);
+    expect(router.isTransitioning).toBe(true);
+    advance(MARGIN_MS * 2);
+    expect(router.isTransitioning).toBe(false);
+  });
+
+  it("애니메이션 이벤트가 없는 환경(jsdom)은 지금처럼 duration+grace 에 끝낸다", () => {
+    renderRouter();
+    act(() => {
+      router.push("/p2");
+    });
+
+    advance(TEST_DURATION_MS + GRACE_MS + MARGIN_MS);
+    expect(router.isTransitioning).toBe(false);
   });
 });

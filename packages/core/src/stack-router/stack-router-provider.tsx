@@ -101,7 +101,8 @@ const StackRouterProvider = ({
     onBackAtRoot,
     onNotFound,
   });
-  const { state, endTransition } = navigation;
+  const { state, endTransition, awaitTransitionStart, onTransitionStart } =
+    navigation;
 
   const elementFor = (pattern: string) =>
     Activities.find((activity) => activity.path === pattern)?.element ??
@@ -245,6 +246,12 @@ const StackRouterProvider = ({
                     duration={effectiveDuration}
                     zIndex={index}
                     isTop={isTop}
+                    onAnimationPending={
+                      pageState === "enter" ? awaitTransitionStart : undefined
+                    }
+                    onAnimationStart={
+                      pageState === "enter" ? onTransitionStart : undefined
+                    }
                     onAnimationEnd={
                       pageState === "enter" ? endTransition : undefined
                     }

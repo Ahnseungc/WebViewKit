@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
 import { createBridgeId } from "../bridge/protocol";
-import { KEEP_ALIVE_LIMIT, TRANSITION_END_GRACE_MS } from "../constants";
+import {
+  KEEP_ALIVE_LIMIT,
+  TRANSITION_END_GRACE_MS,
+  TRANSITION_START_TIMEOUT_MS,
+} from "../constants";
 import { history } from "../history";
 import type {
   Activity,
@@ -41,6 +45,10 @@ export interface StackNavigation {
   pop: (count?: number) => boolean;
   popTo: (path: string) => boolean;
   endTransition: () => void;
+  /** 들어오는 페이지에 시작 대기 중인 CSS 애니메이션이 있다 (커밋 중, 안전 타이머를 길게) */
+  awaitTransitionStart: () => void;
+  /** 들어오는 페이지의 CSS 애니메이션이 시작됐다 (안전 타이머를 지금부터 다시 잰다) */
+  onTransitionStart: () => void;
 }
 
 const isDev = () =>
@@ -355,18 +363,40 @@ export function useStackNavigation(
     dispatch({ type: "RESTORE", entries: [root, top] });
   }, [resolve]);
 
-  // 전환 종료 안전 타이머 (animationend 누락·jsdom 대비)
+  // 전환 종료 안전 타이머 (animationend 누락·jsdom 대비).
+  // 애니메이션이 시작 대기 중이면 시작을 기다릴 만큼 길게 두고, animationstart 에서 다시 잰다
+  const transitionTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const awaitingStartRef = useRef(false);
+  const armTransitionTimer = useCallback(
+    (delay: number) => {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = setTimeout(endTransition, delay);
+    },
+    [endTransition]
+  );
+
+  const awaitTransitionStart = useCallback(() => {
+    awaitingStartRef.current = true;
+  }, []);
+
+  const onTransitionStart = useCallback(() => {
+    awaitingStartRef.current = false;
+    if (!stateRef.current.transition) return;
+    armTransitionTimer(optionsRef.current.duration + TRANSITION_END_GRACE_MS);
+  }, [armTransitionTimer]);
+
   useEffect(() => {
     if (!state.transition) {
       busyRef.current = false;
+      awaitingStartRef.current = false;
       return;
     }
-    const timer = setTimeout(
-      endTransition,
-      optionsRef.current.duration + TRANSITION_END_GRACE_MS
-    );
-    return () => clearTimeout(timer);
-  }, [state, endTransition]);
+    const wait = awaitingStartRef.current
+      ? TRANSITION_START_TIMEOUT_MS
+      : TRANSITION_END_GRACE_MS;
+    armTransitionTimer(optionsRef.current.duration + wait);
+    return () => clearTimeout(transitionTimerRef.current);
+  }, [state, armTransitionTimer]);
 
   return {
     state,
@@ -378,5 +408,7 @@ export function useStackNavigation(
     pop,
     popTo,
     endTransition,
+    awaitTransitionStart,
+    onTransitionStart,
   };
 }
