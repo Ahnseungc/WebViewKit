@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   // GitHub Pages 는 /WebViewKit/ 하위에 배포한다 (.github/workflows/pages.yml)
   base: process.env.DEMO_BASE ?? "/",
-  plugins: [react({ jsxImportSource: "@emotion/react" })],
+  plugins: [react()],
   resolve: {
     alias: {
       // 데모는 빌드 없이 core 소스를 바로 사용

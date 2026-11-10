@@ -1,6 +1,6 @@
-import styled from "@emotion/styled";
 import React from "react";
 import { useStackRouter } from "../stack-router-provider";
+import { useStackStyles } from "../use-stack-styles";
 
 interface BackRouterProps {
   /** 스크린리더 라벨 */
@@ -8,42 +8,21 @@ interface BackRouterProps {
 }
 
 const BackRouter = ({ label = "뒤로 가기" }: BackRouterProps) => {
+  useStackStyles();
   const { back } = useStackRouter();
   return (
-    <BackButton type="button" aria-label={label} onClick={() => back()}>
+    <button
+      type="button"
+      className="wvk-back"
+      aria-label={label}
+      onClick={() => back()}
+    >
       <BackIcon />
-    </BackButton>
+    </button>
   );
 };
 
 export default BackRouter;
-
-/**
- styles
- */
-
-const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.2s;
-  color: var(--wvk-back-color, #000000);
-
-  &:hover {
-    color: var(--wvk-back-hover-color, #666666);
-  }
-
-  &:active {
-    color: var(--wvk-back-active-color, #999999);
-  }
-`;
 
 const BackIcon = () => (
   <svg

@@ -9,7 +9,7 @@ React **WebView·하이브리드 앱**용 스택(push/back) 네비게이션 + �
 
 ```bash
 npm install @ahnseungchan/webviewkit
-npm install react react-dom   # peer (react >= 18). emotion 은 함께 설치된다
+npm install react react-dom   # peer (react >= 18). `/core` 만 쓰면 필요 없다
 ```
 
 ## Quick Start
