@@ -1,4 +1,4 @@
-import type { Activity } from "../type";
+import type { ActivityRoute } from "../type";
 
 export interface PathMatch {
   params: Record<string, string>;
@@ -54,10 +54,10 @@ export function matchPath(pattern: string, url: string): PathMatch | null {
 }
 
 /** 등록 순서대로 첫 매칭 Activity */
-export function findActivity(
-  activities: Activity[],
+export function findActivity<A extends ActivityRoute>(
+  activities: A[],
   url: string
-): { activity: Activity; match: PathMatch } | null {
+): { activity: A; match: PathMatch } | null {
   for (const activity of activities) {
     const match = matchPath(activity.path, url);
     if (match) return { activity, match };

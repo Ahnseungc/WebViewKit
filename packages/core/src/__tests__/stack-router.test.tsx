@@ -10,12 +10,12 @@ import {
   TRANSITION_END_GRACE_MS,
   TRANSITION_START_TIMEOUT_MS,
 } from "../constants";
+import type { StackRouterProviderProps } from "../react-types";
 import { useActivity, useParams } from "../stack-router/activity-context";
 import StackRouterProvider, {
   type StackRouterContextValue,
   useStackRouter,
 } from "../stack-router/stack-router-provider";
-import type { StackRouterProviderProps } from "../type";
 
 const TEST_DURATION_MS = 20;
 

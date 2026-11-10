@@ -1,30 +1,32 @@
-import styled from "@emotion/styled";
 import React, {
   createContext,
   useContext,
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import {
   DEV_MOUNTED_PAGES_WARN,
   KEEP_ALIVE_LIMIT,
   STACK_TRANSITION_MS,
 } from "../constants";
-import { StackDevRoadmap } from "../stack-dev/stack-dev-roadmap";
 import type {
   Activity,
-  HistoryState,
   StackRouterProviderProps,
   VisiblePage,
-} from "../type";
+} from "../react-types";
+import { StackDevRoadmap } from "../stack-dev/stack-dev-roadmap";
+import type { HistoryState } from "../type";
 import StackHeader from "./_components/header";
 import StackPage from "./_components/stack-page";
 import { ActivityContext } from "./activity-context";
-import { getRenderedPages, type StackEntry } from "./stack-reducer";
+import { createPageLayout } from "./page-layout";
+import type { StackEntry } from "./stack-reducer";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 import { useStackBridgeSync } from "./use-stack-bridge-sync";
 import { useStackNavigation } from "./use-stack-navigation";
+import { useStackStyles } from "./use-stack-styles";
 
 export interface StackRouterContextValue {
   currentPath: string;
@@ -66,10 +68,6 @@ export const useStackRouter = () => {
 const isDevEnv = () =>
   typeof process !== "undefined" && process.env?.NODE_ENV === "development";
 
-const MIN_MOUNTED_PAGES = 1;
-/** 보관(cached) 페이지의 useActivity().index */
-const CACHED_ACTIVITY_INDEX = -1;
-
 const StackRouterProvider = ({
   initialActivity,
   Activities = [],
@@ -87,6 +85,7 @@ const StackRouterProvider = ({
   onNotFound,
   bridge,
 }: StackRouterProviderProps) => {
+  useStackStyles();
   const reducedMotion = usePrefersReducedMotion();
   const effectiveDuration =
     transition === "none" || reducedMotion ? 0 : duration;
@@ -141,63 +140,12 @@ const StackRouterProvider = ({
     [state, Activities, initialActivity, navigation]
   );
 
-  useStackBridgeSync(bridge, value, onBackAtRoot);
+  useStackBridgeSync(bridge, navigation.navigator, onBackAtRoot);
 
   const direction = state.transition?.type ?? "push";
-  const pages = getRenderedPages(state);
-  const stackIndexByKey = new Map(
-    state.entries.map((entry, index) => [entry.key, index])
-  );
-  // useActivity().index: 스택 위치. 퇴장 중이면 빠지기 전 위치, 보관 중이면 -1
-  const activityIndexOf = (entry: StackEntry) => {
-    const stackIndex = stackIndexByKey.get(entry.key);
-    if (stackIndex !== undefined) return stackIndex;
-    const leavingIndex = state.leaving.findIndex(
-      (item) => item.key === entry.key
-    );
-    return leavingIndex === -1
-      ? CACHED_ACTIVITY_INDEX
-      : state.entries.length + leavingIndex;
-  };
-  const mountLimit =
-    maxMountedPages === undefined || !Number.isFinite(maxMountedPages)
-      ? Infinity
-      : Math.max(MIN_MOUNTED_PAGES, maxMountedPages);
-  // 직전 렌더에서 마운트돼 있던 key. 퇴장 페이지를 슬라이드만 하려고 새로 마운트하지 않기 위함
-  const mountedKeysRef = useRef<Set<string>>(new Set());
-  const wasMounted = mountedKeysRef.current;
-  const shouldMount = (page: (typeof pages)[number]) => {
-    const { entry, pageState } = page;
-    // cached 페이지와 keepAlive 엔트리는 항상 마운트
-    if (pageState === "cached" || entry.keepAlive) return true;
-    const stackIndex = stackIndexByKey.get(entry.key);
-    // 스택 밖(퇴장 중) 페이지는 이미 마운트돼 있던 경우에만 유지
-    if (stackIndex === undefined) return wasMounted.has(entry.key);
-    if (pageState === "enter" || pageState === "exit") return true;
-    return state.entries.length - stackIndex <= mountLimit;
-  };
-  const mountedKeys = new Set(
-    pages.filter(shouldMount).map((page) => page.entry.key)
-  );
-  mountedKeysRef.current = mountedKeys;
-  const mountedCount = mountedKeys.size;
-
-  // DOM 이동은 스크롤 위치를 초기화하므로 key 의 최초 렌더 순서로 DOM 순서를 고정한다.
-  // 쌓임 순서는 getRenderedPages 위치(zIndex)로 표현한다.
-  const domOrderRef = useRef<string[]>([]);
-  const currentKeys = new Set(pages.map((page) => page.entry.key));
-  const knownKeys = new Set(domOrderRef.current);
-  domOrderRef.current = [
-    ...domOrderRef.current.filter((key) => currentKeys.has(key)),
-    ...pages.map((page) => page.entry.key).filter((key) => !knownKeys.has(key)),
-  ];
-  const domOrder = domOrderRef.current;
-  const domPages = pages
-    .map((page, index) => ({ page, index }))
-    .sort(
-      (a, b) =>
-        domOrder.indexOf(a.page.entry.key) - domOrder.indexOf(b.page.entry.key)
-    );
+  const [layoutPages] = useState(createPageLayout);
+  const pages = layoutPages(state, { maxMountedPages });
+  const mountedCount = pages.filter((page) => page.mounted).length;
 
   const hasWarnedRef = useRef(false);
   useEffect(() => {
@@ -218,11 +166,11 @@ const StackRouterProvider = ({
 
   return (
     <StackRouterContext.Provider value={value}>
-      <LayoutContainer safeArea={safeArea}>
-        <Layout maxWidth={maxWidth} data-testid="layout">
-          <PageContainer>
-            {domPages.map(({ page, index }) => {
-              const { entry, pageState, isTop } = page;
+      <div className="wvk-root" data-safe-area={safeArea ? "" : undefined}>
+        <div className="wvk-layout" style={{ maxWidth }} data-testid="layout">
+          <div className="wvk-pages">
+            {pages.map((page) => {
+              const { entry, pageState, isTop, mounted } = page;
               return (
                 <ActivityContext.Provider
                   key={entry.key}
@@ -233,19 +181,17 @@ const StackRouterProvider = ({
                     params: entry.params,
                     query: entry.query,
                     data: entry.data,
-                    index: activityIndexOf(entry),
+                    index: page.activityIndex,
                     isTop,
                     isCached: pageState === "cached",
                     revision: entry.revision ?? 0,
                   }}
                 >
                   <StackPage
-                    pageState={pageState}
+                    page={page}
                     direction={direction}
-                    transitionType={transition}
+                    transition={transition}
                     duration={effectiveDuration}
-                    zIndex={index}
-                    isTop={isTop}
                     onAnimationPending={
                       pageState === "enter" ? awaitTransitionStart : undefined
                     }
@@ -256,19 +202,15 @@ const StackRouterProvider = ({
                       pageState === "enter" ? endTransition : undefined
                     }
                   >
-                    {mountedKeys.has(entry.key) && isShowHeader && (
-                      <StackHeader />
-                    )}
-                    {mountedKeys.has(entry.key)
-                      ? elementFor(entry.pattern)
-                      : null}
+                    {mounted && isShowHeader && <StackHeader />}
+                    {mounted ? elementFor(entry.pattern) : null}
                   </StackPage>
                 </ActivityContext.Provider>
               );
             })}
-          </PageContainer>
-        </Layout>
-      </LayoutContainer>
+          </div>
+        </div>
+      </div>
       <StackDevRoadmap
         visible={showDevTools}
         pages={state.entries.map((entry) => ({ path: entry.path }))}
@@ -280,36 +222,3 @@ const StackRouterProvider = ({
 
 export default StackRouterProvider;
 export { StackRouterProvider };
-
-/**styles */
-const LayoutContainer = styled.div<{ safeArea: boolean }>`
-  width: 100%;
-  height: 100vh;
-  height: 100dvh;
-  display: flex;
-  justify-content: center;
-  background: var(--wvk-page-bg, #ffffff);
-  box-sizing: border-box;
-  ${({ safeArea }) =>
-    safeArea
-      ? `padding: env(safe-area-inset-top) env(safe-area-inset-right)
-    env(safe-area-inset-bottom) env(safe-area-inset-left);`
-      : ""}
-`;
-
-const Layout = styled.div<{ maxWidth: string }>`
-  width: 100%;
-  max-width: ${({ maxWidth }) => maxWidth};
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-`;
-
-const PageContainer = styled.div`
-  position: relative;
-  flex: 1;
-  width: 100%;
-  overflow: hidden;
-`;

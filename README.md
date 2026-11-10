@@ -25,19 +25,24 @@ so screens slide in and out like a native app while URLs, browser back, and deep
 - **Per-page header** that slides with its page.
 - **Native bridge** for React Native and Flutter: the app can drive the stack, and hardware back asks the web first.
 - **Works with Next.js App Router** (history state from the framework is preserved).
+- **Framework-agnostic core** (`@ahnseungchan/webviewkit/core`): the stack, history, transitions, and bridge have no React dependency, so a Vue / Svelte / vanilla binding is a few dozen lines.
 - Dev overlay that shows the current stack.
 
 ## Install
 
 ```bash
 npm install @ahnseungchan/webviewkit
-# peer: react >= 18
+# peer: react >= 18 (optional if you only use /core)
 ```
 
 ## Quick start
 
 ```tsx
-import { StackRouterProvider, useParams, useStackRouter } from "@ahnseungchan/webviewkit";
+import {
+  StackRouterProvider,
+  useParams,
+  useStackRouter,
+} from "@ahnseungchan/webviewkit";
 
 function Home() {
   const { push } = useStackRouter();
@@ -66,19 +71,59 @@ export default function App() {
 
 ## Core API
 
-| API | What it does |
-|-----|--------------|
-| `<StackRouterProvider>` | Owns the stack. Key props: `Activities`, `initialActivity`, `transition` (`"slide"` \| `"fade"` \| `"none"`), `duration`, `keepAliveLimit`, `popStateTransition`, `restoreStack`, `isShowHeader`, `bridge` |
-| `useStackRouter()` | `push`, `replace`, `reset`, `resetPush`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `isTransitioning` |
-| `useOptionalStackRouter()` | Same, but returns `null` outside the provider |
-| `useActivity()` | Current page: `path`, `params`, `query`, `data`, `isTop`, `isCached`, ... |
-| `useParams()` | Route params (`/detail/:id` → `{ id }`) |
-| `useOnRevive(cb)` | Called when a keep-alive page comes back, so you can refresh its data |
-| `<StackHeader title />` | Header with a back button, rendered inside the page |
+| API                        | What it does                                                                                                                                                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<StackRouterProvider>`    | Owns the stack. Key props: `Activities`, `initialActivity`, `transition` (`"slide"` \| `"fade"` \| `"none"`), `duration`, `keepAliveLimit`, `popStateTransition`, `restoreStack`, `isShowHeader`, `bridge` |
+| `useStackRouter()`         | `push`, `replace`, `reset`, `resetPush`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `isTransitioning`                                                                           |
+| `useOptionalStackRouter()` | Same, but returns `null` outside the provider                                                                                                                                                              |
+| `useActivity()`            | Current page: `path`, `params`, `query`, `data`, `isTop`, `isCached`, ...                                                                                                                                  |
+| `useParams()`              | Route params (`/detail/:id` → `{ id }`)                                                                                                                                                                    |
+| `useOnRevive(cb)`          | Called when a keep-alive page comes back, so you can refresh its data                                                                                                                                      |
+| `<StackHeader title />`    | Header with a back button, rendered inside the page                                                                                                                                                        |
 
 Theme with CSS variables: `--wvk-page-bg`, `--wvk-dim-color`, `--wvk-edge-shadow`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.
 
 Full prop and hook reference: [docs/README.ko.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/README.ko.md) (Korean for now; an English reference PR is welcome).
+
+## Other frameworks (`/core`)
+
+`@ahnseungchan/webviewkit/core` holds everything except rendering: the stack navigator, history sync, keep-alive, transition timing, CSS, and the native bridge. It never imports React.
+A binding only subscribes to the navigator and draws the pages it is given.
+
+```ts
+import {
+  createPageLayout,
+  createStackNavigator,
+  ensureStackStyles,
+  getStackPageAttributes,
+} from "@ahnseungchan/webviewkit/core";
+
+const navigator = createStackNavigator({
+  initialActivity: { path: "/" },
+  activities: [{ path: "/detail/:id", keepAlive: true }],
+  duration: 500,
+  restoreStack: "with-root",
+  keepAliveLimit: 5,
+});
+const layout = createPageLayout();
+
+ensureStackStyles();
+const stop = navigator.start(); // popstate + deep-link restore; call stop() on unmount
+navigator.subscribe(() => {
+  const state = navigator.getState();
+  for (const page of layout(state)) {
+    // Render one element per page.entry.key (skip its content when !page.mounted) and spread:
+    getStackPageAttributes(page, {
+      direction: state.transition?.type ?? "push",
+      transition: "slide",
+      duration: 500,
+    });
+  }
+});
+```
+
+On the entering page (`pageState === "enter"`), call `navigator.onTransitionStart()` on `animationstart` and `navigator.endTransition()` on `animationend` (filter with `isOwnPageAnimation(event)`). Set `inert` on pages that are not on top.
+`connectStackBridge(navigator, options)` wires the native bridge the same way `bridge` does on the React provider.
 
 ## Native bridge
 

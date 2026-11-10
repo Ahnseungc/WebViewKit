@@ -20,7 +20,6 @@
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "outDir": "dist",
-    "jsxImportSource": "@emotion/react",
     "paths": {
       "@ahnseungchan/webviewkit": [
         "../core/src/index.ts"

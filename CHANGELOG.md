@@ -2,6 +2,25 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
+## [Unreleased]
+
+### Added
+
+- `@ahnseungchan/webviewkit/core` 진입점: React 를 import 하지 않는 스택 코어. Vue·Svelte·vanilla 바인딩은 이것만 구독해 그리면 된다
+  - `createStackNavigator`: 스택 상태·push/back·popstate·새로고침 복원·전환 잠금·안전 타이머 (`subscribe`/`getState`/`start`)
+  - `createPageLayout`: 그릴 페이지 목록(DOM 순서·zIndex·마운트 여부·activity index)
+  - `stackStyles`·`ensureStackStyles`·`getStackPageAttributes`·`isOwnPageAnimation`·`hasPendingAnimation`: 전환 CSS 와 페이지 속성
+  - `connectStackBridge`: 네비게이터 ↔ 네이티브 브릿지
+  - `prefersReducedMotion`·`watchReducedMotion`
+  - 브릿지 API 전체(`WebViewBridgeProvider` 제외)
+- `ActivityRoute` 타입 (element 없는 경로 정의)
+
+### Changed
+
+- React 바인딩(`StackRouterProvider` 등)은 위 코어 위에서 동작한다. 공개 API·동작은 그대로
+- 스타일을 emotion 대신 정적 CSS(`<style data-webviewkit>` 한 번 주입)로 바꿨다. `--wvk-*` CSS 변수는 그대로. `@emotion/react`·`@emotion/styled` 의존성 제거
+- `react`·`react-dom` peer 를 optional 로: `/core` 만 쓰면 설치하지 않아도 된다
+
 ## [2.4.1] - 2026-11-10
 
 ### Docs
