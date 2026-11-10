@@ -2,6 +2,14 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
+## [2.4.1] - 2026-11-10
+
+### Docs
+
+- MIT `LICENSE` 파일을 패키지에 포함
+- README 를 영어로 개편(라이브 데모 링크·기능 목록·빠른 시작), 한국어 상세 문서는 `docs/README.ko.md`
+- npm 설명·키워드 보강
+
 ## [2.4.0] - 2026-11-10
 
 ### Added

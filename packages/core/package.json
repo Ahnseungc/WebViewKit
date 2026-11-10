@@ -1,6 +1,6 @@
 {
   "name": "@ahnseungchan/webviewkit",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "Native-like stack navigation (iOS-style push/back) and a React Native / Flutter bridge for React apps in WebViews",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
