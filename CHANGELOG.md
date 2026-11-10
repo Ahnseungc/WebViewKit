@@ -2,7 +2,7 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
-## [Unreleased]
+## [2.5.0] - 2026-11-10
 
 ### Added
 
@@ -22,6 +22,10 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 - React 바인딩(`StackRouterProvider` 등)은 위 코어 위에서 동작한다. 공개 API·동작은 그대로
 - 스타일을 emotion 대신 정적 CSS(`<style data-webviewkit>` 한 번 주입)로 바꿨다. `--wvk-*` CSS 변수는 그대로. `@emotion/react`·`@emotion/styled` 의존성 제거
 - `react`·`react-dom` peer 를 optional 로: `/core` 만 쓰면 설치하지 않아도 된다
+
+### Docs
+
+- README·npm 소개를 React·Vue 3·Svelte 5·`/core` 지원 기준으로 개편 (진입점별 설치 표, 프레임워크별 Quick start, API 차이표)
 
 ## [2.4.1] - 2026-11-10
 

@@ -1,6 +1,6 @@
 {
   "name": "@ahnseungchan/webviewkit",
-  "version": "2.4.1",
+  "version": "2.5.0",
   "description": "Native-like stack navigation (iOS-style push/back, keep-alive, deep links) and a React Native / Flutter bridge for WebView apps. React, Vue 3, Svelte 5, or a framework-agnostic core.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
