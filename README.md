@@ -25,7 +25,7 @@ so screens slide in and out like a native app while URLs, browser back, and deep
 - **Per-page header** that slides with its page.
 - **Native bridge** for React Native and Flutter: the app can drive the stack, and hardware back asks the web first.
 - **Works with Next.js App Router** (history state from the framework is preserved).
-- **Framework-agnostic core** (`@ahnseungchan/webviewkit/core`): the stack, history, transitions, and bridge have no React dependency, so a Vue / Svelte / vanilla binding is a few dozen lines.
+- **Framework-agnostic core** (`@ahnseungchan/webviewkit/core`): the stack, history, transitions, and bridge have no React dependency, so other bindings are thin. A Vue 3 binding ships at `@ahnseungchan/webviewkit/vue`.
 - Dev overlay that shows the current stack.
 
 ## Install
@@ -84,6 +84,38 @@ export default function App() {
 Theme with CSS variables: `--wvk-page-bg`, `--wvk-dim-color`, `--wvk-edge-shadow`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.
 
 Full prop and hook reference: [docs/README.ko.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/README.ko.md) (Korean for now; an English reference PR is welcome).
+
+## Vue 3 (`/vue`)
+
+```ts
+import { createApp, defineComponent, h } from "vue";
+import {
+  StackRouter,
+  useParams,
+  useStackRouter,
+} from "@ahnseungchan/webviewkit/vue";
+
+const Home = defineComponent(() => {
+  const router = useStackRouter(); // reactive: router.depth, router.canGoBack, router.push(...)
+  return () =>
+    h("button", { onClick: () => router.push("/detail/1") }, "Open detail");
+});
+
+const Detail = defineComponent(() => {
+  const params = useParams<{ id: string }>(); // ComputedRef
+  return () => h("p", `Detail ${params.value.id}`);
+});
+
+createApp(() =>
+  h(StackRouter, {
+    initialActivity: { path: "/", component: Home },
+    activities: [{ path: "/detail/:id", component: Detail, keepAlive: true }],
+    isShowHeader: true,
+  })
+).mount("#app");
+```
+
+Props match the React provider (`Activities` → `activities`, `element` → `component`). Composables: `useStackRouter`, `useOptionalStackRouter`, `useActivity` (a `Ref`), `useParams`, `useOnRevive`. Components: `StackHeader`, `BackRouter`. The dev overlay is React-only for now.
 
 ## Other frameworks (`/core`)
 

@@ -22,6 +22,14 @@
       "import": "./dist/core.mjs",
       "require": "./dist/core.js"
     },
+    "./vue": {
+      "types": {
+        "import": "./dist/vue.d.mts",
+        "require": "./dist/vue.d.ts"
+      },
+      "import": "./dist/vue.mjs",
+      "require": "./dist/vue.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -74,7 +82,8 @@
   },
   "peerDependencies": {
     "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "react-dom": ">=18.0.0",
+    "vue": ">=3.3.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.2",
@@ -83,6 +92,7 @@
     "@types/jest": "^29.5.12",
     "@types/react": "^18.3.21",
     "@types/react-dom": "^18.3.7",
+    "@vue/test-utils": "2.4.6",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "react": "^18.3.1",
@@ -90,13 +100,17 @@
     "rimraf": "^5.0.5",
     "ts-jest": "^29.1.2",
     "tsup": "8.3.5",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vue": "3.5.13"
   },
   "peerDependenciesMeta": {
     "react": {
       "optional": true
     },
     "react-dom": {
+      "optional": true
+    },
+    "vue": {
       "optional": true
     }
   }

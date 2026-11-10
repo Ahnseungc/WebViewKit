@@ -27,6 +27,7 @@ export {
   createPageLayout,
   type PageLayoutOptions,
   type StackPageLayout,
+  toActivityInfo,
 } from "./stack-router/page-layout";
 export {
   prefersReducedMotion,
@@ -47,6 +48,7 @@ export {
   stackStyles,
 } from "./stack-router/styles";
 export type {
+  ActivityInfo,
   ActivityRoute,
   DirectionType,
   HistoryListener,
