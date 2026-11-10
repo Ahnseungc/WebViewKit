@@ -2,15 +2,22 @@
 
 [English](../README.md)
 
-React **WebView·하이브리드 앱**용 스택(push/back) 네비게이션 + 네이티브 브릿지(RN·Flutter) 라이브러리입니다.  
-`history.pushState`와 CSS 슬라이드 전환으로 네이티브 앱에 가까운 화면 이동을 구현합니다.
+**WebView·하이브리드 앱**용 스택(push/back) 네비게이션 + 네이티브 브릿지(RN·Flutter) 라이브러리입니다.  
+`history.pushState`와 CSS 슬라이드 전환으로 네이티브 앱에 가까운 화면 이동을 구현합니다.  
+React·Vue 3·Svelte 5 바인딩을 제공하고, 프레임워크 없는 코어(`/core`)로 다른 환경에도 붙일 수 있습니다.
 
 ## 설치
 
 ```bash
 npm install @ahnseungchan/webviewkit
-npm install react react-dom   # peer (react >= 18). `/core` 만 쓰면 필요 없다
 ```
+
+| import | 대상 | peer (쓰는 것만 설치) |
+|--------|------|------|
+| `@ahnseungchan/webviewkit` | React | `react`·`react-dom` >= 18 |
+| `@ahnseungchan/webviewkit/vue` | Vue 3 | `vue` >= 3.3 |
+| `@ahnseungchan/webviewkit/svelte` | Svelte 5 (runes) | `svelte` >= 5 |
+| `@ahnseungchan/webviewkit/core` | 그 밖 (vanilla 등) | 없음 |
 
 ## Quick Start
 
@@ -45,6 +52,28 @@ export default function App() {
   );
 }
 ```
+
+## Vue 3 · Svelte 5
+
+props·동작은 React 와 같고 이름만 다르다. 예제는 [README](../README.md#quick-start) 참고.
+
+| React | Vue 3 | Svelte 5 |
+|-------|-------|----------|
+| `<StackRouterProvider>` | `StackRouter` | `StackRouter` |
+| `Activities`, `element` | `activities`, `component` | `activities`, `component` |
+| `useStackRouter()` | reactive 객체 (`router.depth`) | getter 객체 (`router.depth`) |
+| `useActivity()` | `Ref` (`activity.value`) | `{ current }` |
+| `useParams()` | `ComputedRef` (`params.value.id`) | `{ current }` (`params.current.id`) |
+| `useOnRevive`·`useOptionalStackRouter`·`StackHeader`·`BackRouter` | 동일 | 동일 |
+| `enableDevTools` 오버레이 | 미지원 | 미지원 |
+
+Svelte 컴포넌트는 `.svelte` 원본으로 배포되어 앱의 Svelte 플러그인이 컴파일한다.
+
+## 프레임워크 없이 (`/core`)
+
+`createStackNavigator`(스택·history·popstate·복원·전환 타이밍) + `createPageLayout`(그릴 페이지 목록) + `getStackPageAttributes`·`ensureStackStyles`(전환 CSS) + `connectStackBridge`(네이티브 브릿지)로 바인딩을 직접 만들 수 있다. 사용법은 [README](../README.md#other-frameworks-core).
+
+SSR 에서는 스타일이 라우터 마운트 시 주입된다. 첫 페인트부터 필요하면 `/core` 의 `stackStyles` 를 `<style>` 로 직접 넣는다.
 
 ## 동작 규칙
 

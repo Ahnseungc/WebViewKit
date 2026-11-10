@@ -4,11 +4,11 @@
 [![CI](https://github.com/Ahnseungc/WebViewKit/actions/workflows/ci.yml/badge.svg)](https://github.com/Ahnseungc/WebViewKit/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Ahnseungc/WebViewKit/blob/main/LICENSE)
 
-**Native-like stack navigation for React apps that run inside a WebView.**
+**Native-like stack navigation for web apps that run inside a WebView. Works with React, Vue, Svelte, or plain JavaScript.**
 
 Hybrid apps (React Native WebView, Flutter InAppWebView, or a plain mobile browser) usually feel like a website:
 pages swap instantly, back resets scroll, and the hardware back button does odd things.
-WebViewKit gives your React pages an iOS-style push/back stack on top of `history.pushState`,
+WebViewKit gives your pages an iOS-style push/back stack on top of `history.pushState`,
 so screens slide in and out like a native app while URLs, browser back, and deep links keep working.
 
 **[Live demo →](https://ahnseungc.github.io/WebViewKit/)** (open it on your phone)
@@ -24,20 +24,35 @@ so screens slide in and out like a native app while URLs, browser back, and deep
 - **Stack helpers**: `push`, `replace`, `reset`, `resetPush`, `pop(n)`, `popTo(path)`.
 - **Per-page header** that slides with its page.
 - **Native bridge** for React Native and Flutter: the app can drive the stack, and hardware back asks the web first.
+- **Any framework**: one framework-agnostic core, with React, Vue 3, and Svelte 5 bindings that behave the same.
 - **Works with Next.js App Router** (history state from the framework is preserved).
-- Dev overlay that shows the current stack.
+- No CSS-in-JS runtime: the transition CSS is a single static stylesheet.
 
 ## Install
 
 ```bash
 npm install @ahnseungchan/webviewkit
-# peer: react >= 18
 ```
+
+| Import                            | For           | Peer dependency |
+| --------------------------------- | ------------- | --------------- |
+| `@ahnseungchan/webviewkit`        | React         | `react` >= 18   |
+| `@ahnseungchan/webviewkit/vue`    | Vue 3         | `vue` >= 3.3    |
+| `@ahnseungchan/webviewkit/svelte` | Svelte 5      | `svelte` >= 5   |
+| `@ahnseungchan/webviewkit/core`   | Anything else | none            |
+
+Each peer is optional: install only the one you use.
 
 ## Quick start
 
+### React
+
 ```tsx
-import { StackRouterProvider, useParams, useStackRouter } from "@ahnseungchan/webviewkit";
+import {
+  StackRouterProvider,
+  useParams,
+  useStackRouter,
+} from "@ahnseungchan/webviewkit";
 
 function Home() {
   const { push } = useStackRouter();
@@ -64,26 +79,140 @@ export default function App() {
 }
 ```
 
-## Core API
+### Vue 3
 
-| API | What it does |
-|-----|--------------|
-| `<StackRouterProvider>` | Owns the stack. Key props: `Activities`, `initialActivity`, `transition` (`"slide"` \| `"fade"` \| `"none"`), `duration`, `keepAliveLimit`, `popStateTransition`, `restoreStack`, `isShowHeader`, `bridge` |
-| `useStackRouter()` | `push`, `replace`, `reset`, `resetPush`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `isTransitioning` |
-| `useOptionalStackRouter()` | Same, but returns `null` outside the provider |
-| `useActivity()` | Current page: `path`, `params`, `query`, `data`, `isTop`, `isCached`, ... |
-| `useParams()` | Route params (`/detail/:id` → `{ id }`) |
-| `useOnRevive(cb)` | Called when a keep-alive page comes back, so you can refresh its data |
-| `<StackHeader title />` | Header with a back button, rendered inside the page |
+```ts
+import { createApp, defineComponent, h } from "vue";
+import {
+  StackRouter,
+  useParams,
+  useStackRouter,
+} from "@ahnseungchan/webviewkit/vue";
+
+const Home = defineComponent(() => {
+  const router = useStackRouter(); // reactive: router.depth, router.canGoBack, router.push(...)
+  return () =>
+    h("button", { onClick: () => router.push("/detail/1") }, "Open detail");
+});
+
+const Detail = defineComponent(() => {
+  const params = useParams<{ id: string }>(); // ComputedRef
+  return () => h("p", `Detail ${params.value.id}`);
+});
+
+createApp(() =>
+  h(StackRouter, {
+    initialActivity: { path: "/", component: Home },
+    activities: [{ path: "/detail/:id", component: Detail, keepAlive: true }],
+    isShowHeader: true,
+  })
+).mount("#app");
+```
+
+### Svelte 5
+
+```svelte
+<!-- App.svelte -->
+<script lang="ts">
+  import { StackRouter } from "@ahnseungchan/webviewkit/svelte";
+  import Detail from "./Detail.svelte";
+  import Home from "./Home.svelte";
+</script>
+
+<StackRouter
+  initialActivity={{ path: "/", component: Home }}
+  activities={[{ path: "/detail/:id", component: Detail, keepAlive: true }]}
+  isShowHeader
+/>
+```
+
+```svelte
+<!-- Detail.svelte -->
+<script lang="ts">
+  import { useParams, useStackRouter } from "@ahnseungchan/webviewkit/svelte";
+  const router = useStackRouter(); // getters: router.depth, router.canGoBack
+  const params = useParams<{ id: string }>(); // params.current.id
+</script>
+
+<button onclick={() => router.back()}>Back from {params.current.id}</button>
+```
+
+Svelte components ship as `.svelte` source and are compiled by your app's Svelte plugin (runes, Svelte 5 only).
+
+## API
+
+Every binding exposes the same pieces. Names below are the React ones.
+
+| API                        | What it does                                                                                                                                                                                               |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<StackRouterProvider>`    | Owns the stack. Key props: `Activities`, `initialActivity`, `transition` (`"slide"` \| `"fade"` \| `"none"`), `duration`, `keepAliveLimit`, `popStateTransition`, `restoreStack`, `isShowHeader`, `bridge` |
+| `useStackRouter()`         | `push`, `replace`, `reset`, `resetPush`, `back`, `pop(n)`, `popTo(path)`, `canGoBack`, `depth`, `currentPath`, `isTransitioning`                                                                           |
+| `useOptionalStackRouter()` | Same, but returns `null` outside the provider                                                                                                                                                              |
+| `useActivity()`            | Current page: `path`, `params`, `query`, `data`, `isTop`, `isCached`, ...                                                                                                                                  |
+| `useParams()`              | Route params (`/detail/:id` → `{ id }`)                                                                                                                                                                    |
+| `useOnRevive(cb)`          | Called when a keep-alive page comes back, so you can refresh its data                                                                                                                                      |
+| `<StackHeader title />`    | Header with a back button, rendered inside the page                                                                                                                                                        |
+
+Differences in Vue and Svelte:
+
+| React                    | Vue 3                          | Svelte 5                  |
+| ------------------------ | ------------------------------ | ------------------------- |
+| `<StackRouterProvider>`  | `StackRouter`                  | `StackRouter`             |
+| `Activities`, `element`  | `activities`, `component`      | `activities`, `component` |
+| `useActivity()` value    | `Ref` (`activity.value`)       | `{ current }`             |
+| `useParams()` value      | `ComputedRef` (`params.value`) | `{ current }`             |
+| `enableDevTools` overlay | not yet                        | not yet                   |
 
 Theme with CSS variables: `--wvk-page-bg`, `--wvk-dim-color`, `--wvk-edge-shadow`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.
 
 Full prop and hook reference: [docs/README.ko.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/README.ko.md) (Korean for now; an English reference PR is welcome).
 
+## Other frameworks (`/core`)
+
+`@ahnseungchan/webviewkit/core` holds everything except rendering: the stack navigator, history sync, keep-alive, transition timing, CSS, and the native bridge. It never imports a UI framework.
+A binding only subscribes to the navigator and draws the pages it is given. The Vue and Svelte bindings are built this way.
+
+```ts
+import {
+  createPageLayout,
+  createStackNavigator,
+  ensureStackStyles,
+  getStackPageAttributes,
+} from "@ahnseungchan/webviewkit/core";
+
+const navigator = createStackNavigator({
+  initialActivity: { path: "/" },
+  activities: [{ path: "/detail/:id", keepAlive: true }],
+  duration: 500,
+  restoreStack: "with-root",
+  keepAliveLimit: 5,
+});
+const layout = createPageLayout();
+
+ensureStackStyles();
+const stop = navigator.start(); // popstate + deep-link restore; call stop() on unmount
+navigator.subscribe(() => {
+  const state = navigator.getState();
+  for (const page of layout(state)) {
+    // Render one element per page.entry.key (skip its content when !page.mounted) and spread:
+    getStackPageAttributes(page, {
+      direction: state.transition?.type ?? "push",
+      transition: "slide",
+      duration: 500,
+    });
+  }
+});
+```
+
+On the entering page (`pageState === "enter"`), call `navigator.onTransitionStart()` on `animationstart` and `navigator.endTransition()` on `animationend` (filter with `isOwnPageAnimation(event)`). Set `inert` on pages that are not on top.
+`connectStackBridge(navigator, options)` wires the native bridge the same way the `bridge` prop does.
+
+With server rendering, the stylesheet is added when the router mounts. To style the first paint, put `stackStyles` from `/core` in a `<style>` tag yourself.
+
 ## Native bridge
 
 ```tsx
-// Let the app drive the stack and answer hardware back
+// Let the app drive the stack and answer hardware back (same prop in Vue and Svelte)
 <StackRouterProvider bridge {...props} />
 
 // Or connect another router (e.g. Next.js)
@@ -93,6 +222,7 @@ Full prop and hook reference: [docs/README.ko.md](https://github.com/Ahnseungc/W
 - The app sends `stack.push` / `stack.pop` / `back.request` messages. The web replies `{ handled }` so the app knows whether to close.
 - Works with `react-native-webview` (`postMessage`) and `flutter_inappwebview` (`callHandler`), including a Flutter bridge that is injected late.
 - Only same-origin paths are accepted by default (`javascript:` and external URLs are rejected).
+- The bridge client (`createWebViewBridgeClient`, `installBridgeHost`, ...) is also exported from `/core` for apps without a UI framework.
 
 Protocol: [docs/native-bridge-protocol.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/native-bridge-protocol.md)
 
@@ -110,6 +240,8 @@ pnpm install
 pnpm lint && pnpm typecheck && pnpm test && pnpm build
 pnpm --filter @webviewkit/browser dev   # demo at http://localhost:3000
 ```
+
+`pnpm test` runs jest (core, React, Vue) and vitest (Svelte). `pnpm typecheck` runs `tsc` and `svelte-check`.
 
 Releases: bump `packages/core/package.json` and `CHANGELOG.md`, then push a `v<version>` tag.
 `.github/workflows/publish.yml` publishes to npm and creates a GitHub Release.
