@@ -1,3 +1,4 @@
+import type { ActivityInfo } from "../type";
 import {
   getRenderedPages,
   type PageState,
@@ -94,3 +95,22 @@ export function createPageLayout() {
       );
   };
 }
+
+/** 바인딩이 페이지마다 넘기는 useActivity() 값 */
+export const toActivityInfo = ({
+  entry,
+  pageState,
+  isTop,
+  activityIndex,
+}: StackPageLayout): ActivityInfo => ({
+  key: entry.key,
+  path: entry.path,
+  pattern: entry.pattern,
+  params: entry.params,
+  query: entry.query,
+  data: entry.data,
+  index: activityIndex,
+  isTop,
+  isCached: pageState === "cached",
+  revision: entry.revision ?? 0,
+});

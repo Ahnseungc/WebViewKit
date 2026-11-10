@@ -1,20 +1,7 @@
 import { createContext, useContext, useEffect, useRef } from "react";
+import type { ActivityInfo } from "../type";
 
-export interface ActivityContextValue {
-  key: string;
-  path: string;
-  pattern: string;
-  params: Record<string, string>;
-  query: Record<string, string>;
-  data?: unknown;
-  /** 스택 내 위치 (0 = root). 퇴장 중이면 빠지기 전 위치, 보관 중이면 -1 */
-  index: number;
-  isTop: boolean;
-  /** keepAlive 로 보관 중인 페이지 (스택에서는 빠졌지만 마운트 유지) */
-  isCached: boolean;
-  /** 이 인스턴스가 새 data 로 재사용(보관본 되살리기·resetPush 재사용)된 횟수 */
-  revision: number;
-}
+export type ActivityContextValue = ActivityInfo;
 
 export const ActivityContext = createContext<ActivityContextValue | null>(null);
 

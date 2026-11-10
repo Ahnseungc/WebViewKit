@@ -6,6 +6,7 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
 ### Added
 
+- `@ahnseungchan/webviewkit/vue`: Vue 3 바인딩 (`StackRouter`, `StackHeader`, `BackRouter`, `useStackRouter`, `useOptionalStackRouter`, `useActivity`, `useParams`, `useOnRevive`). props 는 React Provider 와 같고 `element` 대신 `component`. `vue` 는 optional peer (>= 3.3)
 - `@ahnseungchan/webviewkit/core` 진입점: React 를 import 하지 않는 스택 코어. Vue·Svelte·vanilla 바인딩은 이것만 구독해 그리면 된다
   - `createStackNavigator`: 스택 상태·push/back·popstate·새로고침 복원·전환 잠금·안전 타이머 (`subscribe`/`getState`/`start`)
   - `createPageLayout`: 그릴 페이지 목록(DOM 순서·zIndex·마운트 여부·activity index)
@@ -13,7 +14,7 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
   - `connectStackBridge`: 네비게이터 ↔ 네이티브 브릿지
   - `prefersReducedMotion`·`watchReducedMotion`
   - 브릿지 API 전체(`WebViewBridgeProvider` 제외)
-- `ActivityRoute` 타입 (element 없는 경로 정의)
+- `ActivityRoute`(element 없는 경로 정의)·`ActivityInfo` 타입, `toActivityInfo`
 
 ### Changed
 

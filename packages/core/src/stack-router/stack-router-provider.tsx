@@ -21,7 +21,7 @@ import type { HistoryState } from "../type";
 import StackHeader from "./_components/header";
 import StackPage from "./_components/stack-page";
 import { ActivityContext } from "./activity-context";
-import { createPageLayout } from "./page-layout";
+import { createPageLayout, toActivityInfo } from "./page-layout";
 import type { StackEntry } from "./stack-reducer";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 import { useStackBridgeSync } from "./use-stack-bridge-sync";
@@ -170,22 +170,11 @@ const StackRouterProvider = ({
         <div className="wvk-layout" style={{ maxWidth }} data-testid="layout">
           <div className="wvk-pages">
             {pages.map((page) => {
-              const { entry, pageState, isTop, mounted } = page;
+              const { entry, pageState, mounted } = page;
               return (
                 <ActivityContext.Provider
                   key={entry.key}
-                  value={{
-                    key: entry.key,
-                    path: entry.path,
-                    pattern: entry.pattern,
-                    params: entry.params,
-                    query: entry.query,
-                    data: entry.data,
-                    index: page.activityIndex,
-                    isTop,
-                    isCached: pageState === "cached",
-                    revision: entry.revision ?? 0,
-                  }}
+                  value={toActivityInfo(page)}
                 >
                   <StackPage
                     page={page}
