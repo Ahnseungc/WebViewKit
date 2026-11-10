@@ -13,6 +13,8 @@ export type StackTransitionType = "slide" | "fade" | "none";
 
 export type RestoreStackPolicy = "with-root" | "top-only";
 
+export type PopStateTransition = "animate" | "none";
+
 export interface StackRouterProviderProps {
   initialActivity: Activity;
   Activities?: Activity[];
@@ -24,6 +26,12 @@ export interface StackRouterProviderProps {
   transition?: StackTransitionType;
   /** 전환 시간 ms (기본 STACK_TRANSITION_MS) */
   duration?: number;
+  /**
+   * 브라우저 popstate(WebViewKit 의 back·pop·popTo 가 아닌 history 이동: 브라우저·하드웨어 back/forward,
+   * iOS WKWebView 엣지 스와이프)로 생기는 전환 (기본 "animate").
+   * "none" 이면 애니메이션 없이 즉시 반영한다. 네이티브가 이미 스냅샷을 슬라이드한 경우 두 번 슬라이드되지 않게
+   */
+  popStateTransition?: PopStateTransition;
   /** 새로고침·딥링크 진입 시 스택 복원 정책 (기본 "with-root") */
   restoreStack?: RestoreStackPolicy;
   /** keepAlive 페이지 최대 보관 수 (기본 KEEP_ALIVE_LIMIT, 0 이면 보관 안 함) */

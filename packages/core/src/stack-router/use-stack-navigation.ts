@@ -2,7 +2,12 @@ import { useCallback, useEffect, useReducer, useRef } from "react";
 import { createBridgeId } from "../bridge/protocol";
 import { KEEP_ALIVE_LIMIT, TRANSITION_END_GRACE_MS } from "../constants";
 import { history } from "../history";
-import type { Activity, HistoryState, RestoreStackPolicy } from "../type";
+import type {
+  Activity,
+  HistoryState,
+  PopStateTransition,
+  RestoreStackPolicy,
+} from "../type";
 import { findActivity, type PathMatch } from "./match-path";
 import {
   createStackState,
@@ -17,6 +22,8 @@ export interface StackNavigationOptions {
   activities: Activity[];
   /** 0 이면 애니메이션 없이 즉시 전환 */
   duration: number;
+  /** "none" 이면 popstate 로 생긴 전환은 애니메이션 없이 즉시 반영 (기본 "animate") */
+  popStateTransition?: PopStateTransition;
   restoreStack: RestoreStackPolicy;
   /** keepAlive 페이지 최대 보관 수. 0 이면 보관·되살리기 안 함 */
   keepAliveLimit: number;
@@ -129,6 +136,9 @@ export function useStackNavigation(
   );
 
   const animate = () => optionsRef.current.duration > 0;
+  // WebViewKit 의 pop() 은 popstate 전에 dispatch 하므로 여기 오지 않는다 (뒤따르는 popstate 는 no-op)
+  const animatePopState = () =>
+    optionsRef.current.popStateTransition !== "none" && animate();
 
   const push = useCallback(
     (path: string, data?: unknown) => {
@@ -267,7 +277,7 @@ export function useStackNavigation(
       if (index !== -1) {
         if (index < entries.length - 1) {
           busyRef.current = true;
-          dispatch({ type: "POP_TO", index, animate: animate() });
+          dispatch({ type: "POP_TO", index, animate: animatePopState() });
         }
         return;
       }
@@ -288,7 +298,7 @@ export function useStackNavigation(
           entry: { ...cachedEntry, data: historyState.data },
           direction: targetIndex === entries.length ? "push" : "pop",
           index: targetIndex,
-          animate: animate(),
+          animate: animatePopState(),
         });
         return;
       }
@@ -308,7 +318,7 @@ export function useStackNavigation(
         historyState.index === entries.length
       ) {
         busyRef.current = true;
-        dispatch({ type: "PUSH", entry, animate: animate() });
+        dispatch({ type: "PUSH", entry, animate: animatePopState() });
         return;
       }
       dispatch({ type: "RESET", entry });

@@ -453,3 +453,75 @@ describe("resetPush", () => {
     expect(window.location.pathname).toBe("/p2");
   });
 });
+
+describe("popStateTransition", () => {
+  const SLOW_DURATION_MS = 300;
+  /** popstate 로 depth 가 바뀐 첫 렌더의 페이지 상태 */
+  const statesWhenDepth = async (depth: number) => {
+    let states: string[] = [];
+    await waitFor(() => {
+      expect(router.depth).toBe(depth);
+      states = pageStates();
+    });
+    return states;
+  };
+
+  it("기본(animate)이면 브라우저 back(popstate)도 슬라이드한다", async () => {
+    renderRouter();
+    await pushAndSettle("/p2");
+
+    act(() => {
+      window.history.back();
+    });
+
+    expect(await statesWhenDepth(1)).toEqual(["p1:enter", "p2:exit"]);
+    await settle();
+  });
+
+  it('"none" 이면 브라우저 back(popstate)은 전환 없이 바로 반영한다', async () => {
+    renderRouter({ popStateTransition: "none" });
+    await pushAndSettle("/p2");
+
+    act(() => {
+      window.history.back();
+    });
+
+    expect(await statesWhenDepth(1)).toEqual(["p1:idle"]);
+    expect(router.isTransitioning).toBe(false);
+    expect(window.location.pathname).toBe("/p1");
+  });
+
+  it('"none" 이면 브라우저 forward(popstate)도 전환 없이 바로 반영한다', async () => {
+    renderRouter({ popStateTransition: "none" });
+    await pushAndSettle("/p2");
+    await backAndSettle();
+
+    act(() => {
+      window.history.forward();
+    });
+
+    expect(await statesWhenDepth(2)).toEqual(["p1:covered", "p2:idle"]);
+    expect(router.isTransitioning).toBe(false);
+  });
+
+  it('"none" 이어도 push 와 WebViewKit back() 은 슬라이드한다', async () => {
+    // popstate 가 전환 끝나기 전에 도착하도록 길게
+    renderRouter({ popStateTransition: "none", duration: SLOW_DURATION_MS });
+
+    act(() => {
+      router.push("/p2");
+    });
+    expect(pageStates()).toEqual(["p1:exit", "p2:enter"]);
+    await settle();
+
+    act(() => {
+      router.back();
+    });
+    expect(pageStates()).toEqual(["p1:enter", "p2:exit"]);
+    // 뒤따르는 popstate 는 no-op 이라 전환을 끊지 않는다
+    await waitFor(() => expect(window.location.pathname).toBe("/p1"));
+    expect(pageStates()).toEqual(["p1:enter", "p2:exit"]);
+    await settle();
+    expect(pageStates()).toEqual(["p1:idle"]);
+  });
+});

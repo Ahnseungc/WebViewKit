@@ -2,6 +2,13 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
+## [Unreleased]
+
+### Added
+
+- Provider `popStateTransition`(`"animate"` 기본 · `"none"`): `"none"` 이면 브라우저 popstate(하드웨어·브라우저 back/forward, iOS WKWebView 엣지 스와이프)로 생기는 전환을 애니메이션 없이 즉시 반영. RN WebView `allowsBackForwardNavigationGestures` 스와이프 back 에서 WKWebView 스냅샷 슬라이드 뒤 페이지가 한 번 더 슬라이드되던 문제를 막는다. WebViewKit 이 시작한 `push`·`back()`·`pop`·`popTo`·`resetPush` 는 그대로 애니메이션
+- `PopStateTransition` 타입 export
+
 ## [2.3.0] - 2026-11-09
 
 ### Added

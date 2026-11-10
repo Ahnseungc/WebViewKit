@@ -29,6 +29,7 @@ export type {
   DirectionType,
   HistoryListener,
   HistoryState,
+  PopStateTransition,
   RestoreStackPolicy,
   StackRouterProviderProps,
   StackTransitionType,

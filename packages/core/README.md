@@ -67,6 +67,7 @@ export default function App() {
 | `maxMountedPages` | 무제한 | 동시 마운트 페이지 상한(1 미만은 1, 유한한 수가 아니면 무제한). 스택 안·캐시된 keepAlive 페이지는 상한과 무관하게 언마운트하지 않으므로 keepAlive 페이지가 많으면 상한보다 많이 마운트될 수 있다(`keepAliveLimit` 으로 제한). 전환 중 페이지도 마운트하되, 언마운트돼 있던 페이지는 퇴장 슬라이드를 위해 다시 마운트하지 않는다. 그 외는 back 시 새로 마운트. 15개 초과 시 dev 경고 |
 | `transition` | `"slide"` | `"slide"`(iOS 네이티브 스택: 패럴랙스·dim·가장자리 그림자) · `"fade"` · `"none"` |
 | `duration` | `500` | 전환 ms |
+| `popStateTransition` | `"animate"` | 브라우저 popstate(하드웨어·브라우저 back/forward, iOS WKWebView 엣지 스와이프 등 WebViewKit 의 `back`·`pop`·`popTo` 가 아닌 history 이동)로 생기는 전환. `"none"` 이면 애니메이션 없이 즉시 반영. React Native WebView 에서 `allowsBackForwardNavigationGestures` 로 네이티브 스와이프 back 을 쓰면 WKWebView 가 이미 스냅샷을 슬라이드한 뒤 popstate 가 오므로, `"none"` 으로 두 번 슬라이드되는 것을 막는다. `push`·`back()`·`pop`·`popTo`·`resetPush` 는 그대로 슬라이드 |
 | `restoreStack` | `"with-root"` | 딥링크 복원 정책 |
 | `onBackAtRoot` / `onNotFound` | — | 콜백 |
 | `isShowHeader` | `false` | 각 페이지 상단에 `StackHeader` 렌더. 헤더가 페이지와 함께 슬라이드되고, 스크롤 시 상단 고정(sticky) |
