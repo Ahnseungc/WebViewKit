@@ -20,5 +20,5 @@
     "incremental": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["src/svelte/**", "node_modules", "dist"]
 }
