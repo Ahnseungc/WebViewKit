@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node"],
+    "lib": ["DOM", "DOM.Iterable", "ES2020"]
+  },
+  "include": ["src/svelte/**/*.ts", "src/svelte/**/*.svelte"],
+  "exclude": []
+}

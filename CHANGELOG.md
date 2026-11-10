@@ -6,6 +6,7 @@ All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
 ### Added
 
+- `@ahnseungchan/webviewkit/svelte`: Svelte 5(runes) 바인딩. `StackRouter`·`StackHeader`·`BackRouter`, `useStackRouter`·`useOptionalStackRouter`·`useActivity`·`useParams`·`useOnRevive` (`useActivity`·`useParams` 는 `{ current }`). `.svelte` 원본으로 배포해 앱의 Svelte 플러그인이 컴파일한다. `svelte` 는 optional peer (>= 5)
 - `@ahnseungchan/webviewkit/vue`: Vue 3 바인딩 (`StackRouter`, `StackHeader`, `BackRouter`, `useStackRouter`, `useOptionalStackRouter`, `useActivity`, `useParams`, `useOnRevive`). props 는 React Provider 와 같고 `element` 대신 `component`. `vue` 는 optional peer (>= 3.3)
 - `@ahnseungchan/webviewkit/core` 진입점: React 를 import 하지 않는 스택 코어. Vue·Svelte·vanilla 바인딩은 이것만 구독해 그리면 된다
   - `createStackNavigator`: 스택 상태·push/back·popstate·새로고침 복원·전환 잠금·안전 타이머 (`subscribe`/`getState`/`start`)

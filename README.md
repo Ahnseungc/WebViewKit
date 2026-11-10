@@ -25,7 +25,7 @@ so screens slide in and out like a native app while URLs, browser back, and deep
 - **Per-page header** that slides with its page.
 - **Native bridge** for React Native and Flutter: the app can drive the stack, and hardware back asks the web first.
 - **Works with Next.js App Router** (history state from the framework is preserved).
-- **Framework-agnostic core** (`@ahnseungchan/webviewkit/core`): the stack, history, transitions, and bridge have no React dependency, so other bindings are thin. A Vue 3 binding ships at `@ahnseungchan/webviewkit/vue`.
+- **Framework-agnostic core** (`@ahnseungchan/webviewkit/core`): the stack, history, transitions, and bridge have no React dependency, so other bindings are thin. Vue 3 and Svelte 5 bindings ship at `@ahnseungchan/webviewkit/vue` and `/svelte`.
 - Dev overlay that shows the current stack.
 
 ## Install
@@ -116,6 +116,36 @@ createApp(() =>
 ```
 
 Props match the React provider (`Activities` → `activities`, `element` → `component`). Composables: `useStackRouter`, `useOptionalStackRouter`, `useActivity` (a `Ref`), `useParams`, `useOnRevive`. Components: `StackHeader`, `BackRouter`. The dev overlay is React-only for now.
+
+## Svelte 5 (`/svelte`)
+
+```svelte
+<!-- App.svelte -->
+<script lang="ts">
+  import { StackRouter } from "@ahnseungchan/webviewkit/svelte";
+  import Detail from "./Detail.svelte";
+  import Home from "./Home.svelte";
+</script>
+
+<StackRouter
+  initialActivity={{ path: "/", component: Home }}
+  activities={[{ path: "/detail/:id", component: Detail, keepAlive: true }]}
+  isShowHeader
+/>
+```
+
+```svelte
+<!-- Detail.svelte -->
+<script lang="ts">
+  import { useParams, useStackRouter } from "@ahnseungchan/webviewkit/svelte";
+  const router = useStackRouter(); // getters: router.depth, router.canGoBack
+  const params = useParams<{ id: string }>(); // params.current.id
+</script>
+
+<button onclick={() => router.back()}>Back from {params.current.id}</button>
+```
+
+Requires Svelte 5 (runes). Components ship as `.svelte` source and are compiled by your app's Svelte plugin. Props match the React provider (`component` instead of `element`). `useActivity()` and `useParams()` return `{ current }`. Also exported: `useOptionalStackRouter`, `useOnRevive`, `StackHeader`, `BackRouter`.
 
 ## Other frameworks (`/core`)
 
