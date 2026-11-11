@@ -39,6 +39,13 @@ export {
   type RouterStack,
   type RouterStackOptions,
 } from "./stack-router/router-stack";
+export {
+  connectRouterStackBridge,
+  createRouterStackActions,
+  type RouterDriver,
+  type RouterStackActionOptions,
+  type RouterStackActions,
+} from "./stack-router/router-stack-actions";
 export type {
   PageState,
   StackEntry,
