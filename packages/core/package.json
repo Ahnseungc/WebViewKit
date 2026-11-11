@@ -43,6 +43,11 @@
       "svelte": "./dist/svelte/index.js",
       "default": "./dist/svelte/index.js"
     },
+    "./sveltekit": {
+      "types": "./dist/sveltekit/index.d.ts",
+      "svelte": "./dist/sveltekit/index.js",
+      "default": "./dist/sveltekit/index.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -79,6 +84,7 @@
     "svelte",
     "vue3",
     "svelte5",
+    "sveltekit",
     "vanilla-js",
     "hybrid",
     "spa-router",
@@ -101,13 +107,15 @@
     "node": ">=18"
   },
   "peerDependencies": {
+    "@sveltejs/kit": ">=2.12.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0",
+    "react-router": ">=7.0.0",
     "svelte": ">=5.0.0",
-    "vue": ">=3.3.0",
-    "react-router": ">=7.0.0"
+    "vue": ">=3.3.0"
   },
   "devDependencies": {
+    "@sveltejs/kit": "2.70.4",
     "@sveltejs/vite-plugin-svelte": "5.0.3",
     "@testing-library/jest-dom": "^6.4.2",
     "@testing-library/react": "^14.2.1",
@@ -148,6 +156,9 @@
       "optional": true
     },
     "react-router": {
+      "optional": true
+    },
+    "@sveltejs/kit": {
       "optional": true
     }
   }

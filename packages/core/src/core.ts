@@ -59,6 +59,7 @@ export {
   isOwnPageAnimation,
   type StackPageAttributeOptions,
   stackStyles,
+  STYLE_ATTRIBUTE,
 } from "./stack-router/styles";
 export type {
   ActivityInfo,
