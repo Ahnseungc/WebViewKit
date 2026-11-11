@@ -6,9 +6,14 @@
     "noEmit": true,
     "declaration": false,
     "declarationMap": false,
-    "types": ["node"],
+    "types": ["node", "@sveltejs/kit"],
     "lib": ["DOM", "DOM.Iterable", "ES2020"]
   },
-  "include": ["src/svelte/**/*.ts", "src/svelte/**/*.svelte"],
+  "include": [
+    "src/svelte/**/*.ts",
+    "src/svelte/**/*.svelte",
+    "src/sveltekit/**/*.ts",
+    "src/sveltekit/**/*.svelte"
+  ],
   "exclude": []
 }
