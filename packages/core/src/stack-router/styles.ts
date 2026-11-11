@@ -47,12 +47,13 @@ ${PAGE}[data-direction="pop"][data-state="enter"]::after{animation:wvk-fade-out 
 .wvk-back:active{color:var(--wvk-back-active-color,#999999)}
 `;
 
-const STYLE_ATTRIBUTE = "data-webviewkit";
+export const STYLE_ATTRIBUTE = "data-webviewkit";
 
 /** `stackStyles` 를 document 에 한 번만 넣는다 (SSR 에서는 no-op) */
 export function ensureStackStyles(): void {
   if (typeof document === "undefined") return;
-  if (document.head.querySelector(`style[${STYLE_ATTRIBUTE}]`)) return;
+  // 라우터가 SSR 로 본문에 그린 <style> 도 있으면 다시 넣지 않는다
+  if (document.querySelector(`style[${STYLE_ATTRIBUTE}]`)) return;
   const style = document.createElement("style");
   style.setAttribute(STYLE_ATTRIBUTE, "");
   style.textContent = stackStyles;

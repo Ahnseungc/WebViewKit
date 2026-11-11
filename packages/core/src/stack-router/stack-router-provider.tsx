@@ -20,13 +20,13 @@ import { StackDevRoadmap } from "../stack-dev/stack-dev-roadmap";
 import type { HistoryState } from "../type";
 import StackHeader from "./_components/header";
 import StackPage from "./_components/stack-page";
+import StackStyles from "./_components/stack-styles";
 import { ActivityContext } from "./activity-context";
 import { createPageLayout, toActivityInfo } from "./page-layout";
 import type { StackEntry } from "./stack-reducer";
 import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
 import { useStackBridgeSync } from "./use-stack-bridge-sync";
 import { useStackNavigation } from "./use-stack-navigation";
-import { useStackStyles } from "./use-stack-styles";
 
 export interface StackRouterContextValue {
   currentPath: string;
@@ -85,7 +85,6 @@ const StackRouterProvider = ({
   onNotFound,
   bridge,
 }: StackRouterProviderProps) => {
-  useStackStyles();
   const reducedMotion = usePrefersReducedMotion();
   const effectiveDuration =
     transition === "none" || reducedMotion ? 0 : duration;
@@ -167,6 +166,7 @@ const StackRouterProvider = ({
   return (
     <StackRouterContext.Provider value={value}>
       <div className="wvk-root" data-safe-area={safeArea ? "" : undefined}>
+        <StackStyles />
         <div className="wvk-layout" style={{ maxWidth }} data-testid="layout">
           <div className="wvk-pages">
             {pages.map((page) => {

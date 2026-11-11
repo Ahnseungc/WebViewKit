@@ -1,3 +1,8 @@
+"use client";
+/**
+ * React 진입점. 훅·컨텍스트를 쓰므로 Next.js 서버 컴포넌트에서는 클라이언트 경계로 다룬다.
+ * 서버에서 쓸 유틸(matchPath·history 등)은 `@ahnseungchan/webviewkit/core` 에서 가져온다
+ */
 export * from "./bridge";
 export {
   BACK_TIMEOUT_MS,
