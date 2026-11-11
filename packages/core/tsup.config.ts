@@ -1,14 +1,20 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/core.ts", "src/vue.ts", "src/react-router.tsx"],
+  entry: [
+    "src/index.ts",
+    "src/core.ts",
+    "src/vue.ts",
+    "src/react-router.tsx",
+    "src/next.tsx",
+  ],
   format: ["cjs", "esm"],
   dts: { compilerOptions: { composite: false, incremental: false } },
   tsconfig: "tsconfig.build.json",
   target: "es2018",
   sourcemap: true,
   clean: true,
-  external: ["react", "react-dom", "react-router", "vue"],
+  external: ["react", "react-dom", "react-router", "next", "vue"],
   esbuildOptions(options) {
     options.jsx = "automatic";
   },
