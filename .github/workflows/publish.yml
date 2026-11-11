@@ -1,5 +1,5 @@
 # npm Trusted Publishing (OIDC) + GitHub Release on version tags
-# npm Trusted Publisher: Ahnseungc/WebViewKit, workflow publish.yml
+# npm Trusted Publisher: Ahnseungc/webview-kit, workflow publish.yml
 name: Publish to npm
 
 on:

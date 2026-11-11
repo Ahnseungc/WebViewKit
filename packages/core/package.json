@@ -114,12 +114,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Ahnseungc/WebViewKit.git"
+    "url": "https://github.com/Ahnseungc/webview-kit.git"
   },
   "bugs": {
-    "url": "https://github.com/Ahnseungc/WebViewKit/issues"
+    "url": "https://github.com/Ahnseungc/webview-kit/issues"
   },
-  "homepage": "https://github.com/Ahnseungc/WebViewKit#readme",
+  "homepage": "https://github.com/Ahnseungc/webview-kit#readme",
   "publishConfig": {
     "access": "public"
   },
