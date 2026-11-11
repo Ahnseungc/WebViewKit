@@ -2,6 +2,27 @@
 
 All notable changes to `@ahnseungchan/webviewkit` are documented here.
 
+## [2.6.0] - 2026-11-11
+
+### Added
+
+- 프레임워크 라우터 어댑터: URL·history·데이터 로딩·SSR 은 프레임워크가 맡고, 렌더된 페이지를 스택으로 쌓아 push/pop 전환한다. 딥링크도 서버에서 그 페이지로 렌더되고, push 마다 프레임워크 데이터 로딩이 돈다. 덮인 페이지는 들어올 때의 params·URL·데이터를 유지한다
+  - `@ahnseungchan/webviewkit/next`: Next.js App Router (`StackLayout`, `useStack`). `next` optional peer (>= 16)
+  - `@ahnseungchan/webviewkit/react-router`: React Router 7 (`StackOutlet`, `useStack`). `react-router` optional peer (>= 7)
+  - `@ahnseungchan/webviewkit/vue-router`: Vue Router 4+·Nuxt 4 (`StackRouterView`, `useStack`). `vue-router` optional peer (>= 4.1)
+  - `@ahnseungchan/webviewkit/sveltekit`: SvelteKit (`StackLayout`, `useStack`, `useStackPage`). `@sveltejs/kit` optional peer (>= 2.12)
+  - 공통 props: `transition`, `duration`, `popStateTransition`, `maxWidth`, `maxMountedPages`, `safeArea`, `keepAlive`, `keepAliveLimit`, `onBackAtRoot`, `bridge`
+- `/core`: `createRouterStack`(외부 라우터 location 을 받아 전환·keepAlive 만 계산), `createRouterStackActions`, `connectRouterStackBridge`
+
+### Changed
+
+- React 진입점에 `"use client"` 를 붙였다. Next.js 서버 컴포넌트에서 `StackRouterProvider` 를 바로 import 할 수 있다. 서버에서 쓸 유틸(`matchPath`·`history` 등)은 `/core` 에서 가져온다
+- `StackRouterProvider` 가 스택 CSS 를 `<style data-webviewkit>` 로 함께 렌더해 SSR 첫 페인트부터 스타일이 적용된다. `ensureStackStyles` 는 문서 어디든 이 태그가 있으면 다시 넣지 않는다
+
+### Docs
+
+- 제목을 webview-kit 으로 바꾸고, 프레임워크 라우터(SSR) 사용법을 README·한국어 문서에 추가
+
 ## [2.5.0] - 2026-11-10
 
 ### Added

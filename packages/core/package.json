@@ -1,6 +1,6 @@
 {
   "name": "@ahnseungchan/webviewkit",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "description": "Native-like stack navigation (iOS-style push/back, keep-alive, deep links) and a React Native / Flutter bridge for WebView apps. React, Vue 3, Svelte 5, or a framework-agnostic core.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -104,7 +104,11 @@
     "vanilla-js",
     "hybrid",
     "spa-router",
-    "native-transition"
+    "native-transition",
+    "ssr",
+    "react-router",
+    "nuxt",
+    "vue-router"
   ],
   "author": "Seungchan Ahn <omnipoo@naver.com>",
   "license": "MIT",

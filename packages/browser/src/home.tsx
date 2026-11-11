@@ -7,9 +7,9 @@ const Home = () => {
 
   return (
     <>
-      <StackHeader title="WebViewKit" />
+      <StackHeader title="webview-kit" />
       <main className="page">
-        <h2>WebViewKit</h2>
+        <h2>webview-kit</h2>
         <p className="lead">
           Native-like stack navigation for React in WebViews. Tap a row, then
           swipe or press back.
@@ -36,7 +36,7 @@ const Home = () => {
             Reset + Detail 1
           </button>
         </div>
-        <a className="github" href="https://github.com/Ahnseungc/WebViewKit">
+        <a className="github" href="https://github.com/Ahnseungc/webview-kit">
           GitHub · npm i @ahnseungchan/webviewkit
         </a>
       </main>

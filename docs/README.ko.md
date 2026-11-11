@@ -18,6 +18,10 @@ npm install @ahnseungchan/webviewkit
 | `@ahnseungchan/webviewkit/vue` | Vue 3 | `vue` >= 3.3 |
 | `@ahnseungchan/webviewkit/svelte` | Svelte 5 (runes) | `svelte` >= 5 |
 | `@ahnseungchan/webviewkit/core` | 그 밖 (vanilla 등) | 없음 |
+| `@ahnseungchan/webviewkit/next` | Next.js App Router | `next` >= 16 |
+| `@ahnseungchan/webviewkit/react-router` | React Router 7 | `react-router` >= 7 |
+| `@ahnseungchan/webviewkit/vue-router` | Vue Router 4+, Nuxt 4 | `vue-router` >= 4.1 |
+| `@ahnseungchan/webviewkit/sveltekit` | SvelteKit | `@sveltejs/kit` >= 2.12 |
 
 ## Quick Start
 
@@ -74,6 +78,31 @@ Svelte 컴포넌트는 `.svelte` 원본으로 배포되어 앱의 Svelte 플러�
 `createStackNavigator`(스택·history·popstate·복원·전환 타이밍) + `createPageLayout`(그릴 페이지 목록) + `getStackPageAttributes`·`ensureStackStyles`(전환 CSS) + `connectStackBridge`(네이티브 브릿지)로 바인딩을 직접 만들 수 있다. 사용법은 [README](../README.md#other-frameworks-core).
 
 SSR 에서는 스타일이 라우터 마운트 시 주입된다. 첫 페인트부터 필요하면 `/core` 의 `stackStyles` 를 `<style>` 로 직접 넣는다.
+
+## 프레임워크 라우터와 함께 (SSR)
+
+`StackRouterProvider` 는 history 를 직접 관리하므로, SSR 앱에서는 처음 연 페이지만 서버에서 렌더됩니다.
+앱에 이미 라우터가 있으면 어댑터를 쓰세요. URL·데이터 로딩·SSR 은 프레임워크가 그대로 맡고, webview-kit 은 렌더된 페이지를 스택으로 쌓아 전환만 합니다.
+
+| 진입점          | 프레임워크                     | 쓰는 곳                                                                                                                                           |
+| --------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/next`         | Next.js App Router (16.4 확인) | `"use client"` 래퍼에서 `<StackLayout>{children}</StackLayout>` 를 `app/layout.tsx` 에                                                            |
+| `/react-router` | React Router 7                 | 레이아웃 라우트에서 `<StackOutlet />`                                                                                                             |
+| `/vue-router`   | Vue Router 4+, Nuxt 4          | `<StackRouterView v-slot="{ route }"><NuxtPage :route="route" /></StackRouterView>` (Vue Router 만 쓰면 `<StackRouterView />`)                    |
+| `/sveltekit`    | SvelteKit                      | `+layout.svelte` 에서 `<StackLayout {pages}>{@render children()}</StackLayout>`, `pages = import.meta.glob("./**/+page.svelte", { eager: true })` |
+
+- 딥링크(`/detail/2` 직접 접속)도 그 페이지가 서버에서 스택 마크업 안에 렌더되고, 스택 CSS 가 함께 들어가 첫 페인트부터 스타일이 적용됩니다.
+- push 할 때마다 프레임워크의 데이터 로딩이 돕니다 (Next RSC, React Router loader, SvelteKit `load`). Nuxt 는 이동 시 클라이언트에서 데이터를 받고, 직접 접속·새로고침만 서버에서 렌더됩니다.
+- 덮인 페이지는 들어올 때의 params·URL·데이터를 유지합니다.
+- 이동은 프레임워크 링크·라우터를 그대로 씁니다. `useStack()` 은 `depth`, `canGoBack`, `isTransitioning`, `push`, `replace`, `reset`, `back`, `pop(n)` 을 줍니다.
+- 공통 props: `transition`, `duration`, `popStateTransition`, `maxWidth`, `maxMountedPages`, `safeArea`, `keepAlive`, `keepAliveLimit`, `onBackAtRoot`, `bridge`.
+
+주의할 점
+
+- Next: 덮인 페이지의 `useParams()`·`usePathname()` 고정에 Next 내부 컨텍스트를 씁니다. Next 업데이트로 깨질 수 있습니다.
+- React Router: `UNSAFE_LocationContext`·`UNSAFE_DataRouterStateContext` 를 씁니다. 없으면 고정 없이 그립니다.
+- Vue Router: 덮인 페이지도 살아 있어 options API 의 `beforeRouteLeave`·`beforeRouteUpdate` 가 다른 인스턴스에서 불릴 수 있습니다 (`onBeforeRoute*` 는 괜찮습니다).
+- SvelteKit: 페이지 값은 `useStackPage()` 나 `data` prop 으로 읽으세요 (`$app/state` 의 `page` 는 늘 현재 URL). eager glob 이라 route 별 코드 분할이 없고, 이 레이아웃 아래 중첩 `+layout.svelte` 는 그려지지 않습니다.
 
 ## 동작 규칙
 
@@ -142,11 +171,11 @@ try {
 - Flutter 브릿지가 늦게 주입돼도(`flutterInAppWebViewPlatformReady`) 감지 후 설치합니다.
 - 하드웨어 back: 네이티브가 `back.request` 를 보내면 웹이 `{ handled }` 로 회신합니다. `handled: false` 면 앱이 종료·닫기를 판단합니다.
 
-프로토콜 상세: [docs/native-bridge-protocol.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/native-bridge-protocol.md)
+프로토콜 상세: [docs/native-bridge-protocol.md](https://github.com/Ahnseungc/webview-kit/blob/main/docs/native-bridge-protocol.md)
 
 ## 1.x → 2.0
 
-[CHANGELOG](https://github.com/Ahnseungc/WebViewKit/blob/main/CHANGELOG.md#200---2026-11-04) 의 Breaking · Migration 을 참고하세요.
+[CHANGELOG](https://github.com/Ahnseungc/webview-kit/blob/main/CHANGELOG.md#200---2026-11-04) 의 Breaking · Migration 을 참고하세요.
 
 ## License
 

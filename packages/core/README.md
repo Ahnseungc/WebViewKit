@@ -1,24 +1,24 @@
-# WebViewKit
+# webview-kit
 
 [![npm](https://img.shields.io/npm/v/@ahnseungchan/webviewkit)](https://www.npmjs.com/package/@ahnseungchan/webviewkit)
-[![CI](https://github.com/Ahnseungc/WebViewKit/actions/workflows/ci.yml/badge.svg)](https://github.com/Ahnseungc/WebViewKit/actions/workflows/ci.yml)
-[![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Ahnseungc/WebViewKit/blob/main/LICENSE)
+[![CI](https://github.com/Ahnseungc/webview-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/Ahnseungc/webview-kit/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Ahnseungc/webview-kit/blob/main/LICENSE)
 
 **Native-like stack navigation for web apps that run inside a WebView. Works with React, Vue, Svelte, or plain JavaScript.**
 
 <p align="center">
-  <a href="https://ahnseungc.github.io/WebViewKit/"><img src="https://raw.githubusercontent.com/Ahnseungc/WebViewKit/main/docs/assets/demo.gif" width="300" alt="WebViewKit demo: pages slide in on push and slide out on back, with the stack shown in a devtools overlay" /></a>
+  <a href="https://ahnseungc.github.io/webview-kit/"><img src="https://raw.githubusercontent.com/Ahnseungc/webview-kit/main/docs/assets/demo.gif" width="300" alt="webview-kit demo: pages slide in on push and slide out on back, with the stack shown in a devtools overlay" /></a>
 </p>
 
 <p align="center">
-  <b><a href="https://ahnseungc.github.io/WebViewKit/">Live demo →</a></b> (open it on your phone)
+  <b><a href="https://ahnseungc.github.io/webview-kit/">Live demo →</a></b> (open it on your phone)
 </p>
 
 ## Why
 
-A web app inside a WebView usually feels like a website. WebViewKit makes it feel like the native screens around it.
+A web app inside a WebView usually feels like a website. webview-kit makes it feel like the native screens around it.
 
-| In a plain WebView                                   | With WebViewKit                                                    |
+| In a plain WebView                                   | With webview-kit                                                   |
 | ---------------------------------------------------- | ------------------------------------------------------------------ |
 | Pages swap instantly                                 | Pages slide in and out like iOS screens                            |
 | Going back loses scroll position and form input      | `keepAlive` pages keep scroll, inputs, and state                   |
@@ -28,7 +28,7 @@ A web app inside a WebView usually feels like a website. WebViewKit makes it fee
 It sits on top of `history.pushState`, so URLs, browser back, and refresh keep working.
 Works in React Native WebView, Flutter InAppWebView, or a plain mobile browser.
 
-[한국어 문서](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/README.ko.md)
+[한국어 문서](https://github.com/Ahnseungc/webview-kit/blob/main/docs/README.ko.md)
 
 ## Features
 
@@ -40,7 +40,7 @@ Works in React Native WebView, Flutter InAppWebView, or a plain mobile browser.
 - **Per-page header** that slides with its page.
 - **Native bridge** for React Native and Flutter: the app can drive the stack, and hardware back asks the web first.
 - **Any framework**: one framework-agnostic core, with React, Vue 3, and Svelte 5 bindings that behave the same.
-- **Works with Next.js App Router** (history state from the framework is preserved).
+- **Server rendering with your framework's router**: Next.js App Router, React Router 7, Nuxt / Vue Router, and SvelteKit adapters keep the framework in charge of URLs, data, and SSR, and add the stack on top.
 - No CSS-in-JS runtime: the transition CSS is a single static stylesheet.
 
 ## Install
@@ -49,12 +49,16 @@ Works in React Native WebView, Flutter InAppWebView, or a plain mobile browser.
 npm install @ahnseungchan/webviewkit
 ```
 
-| Import                            | For           | Peer dependency |
-| --------------------------------- | ------------- | --------------- |
-| `@ahnseungchan/webviewkit`        | React         | `react` >= 18   |
-| `@ahnseungchan/webviewkit/vue`    | Vue 3         | `vue` >= 3.3    |
-| `@ahnseungchan/webviewkit/svelte` | Svelte 5      | `svelte` >= 5   |
-| `@ahnseungchan/webviewkit/core`   | Anything else | none            |
+| Import                                  | For                   | Peer dependency         |
+| --------------------------------------- | --------------------- | ----------------------- |
+| `@ahnseungchan/webviewkit`              | React                 | `react` >= 18           |
+| `@ahnseungchan/webviewkit/vue`          | Vue 3                 | `vue` >= 3.3            |
+| `@ahnseungchan/webviewkit/svelte`       | Svelte 5              | `svelte` >= 5           |
+| `@ahnseungchan/webviewkit/core`         | Anything else         | none                    |
+| `@ahnseungchan/webviewkit/next`         | Next.js App Router    | `next` >= 16            |
+| `@ahnseungchan/webviewkit/react-router` | React Router 7        | `react-router` >= 7     |
+| `@ahnseungchan/webviewkit/vue-router`   | Vue Router 4+, Nuxt 4 | `vue-router` >= 4.1     |
+| `@ahnseungchan/webviewkit/sveltekit`    | SvelteKit             | `@sveltejs/kit` >= 2.12 |
 
 Each peer is optional: install only the one you use.
 
@@ -160,6 +164,95 @@ Svelte components ship as `.svelte` source and are compiled by your app's Svelte
 
 </details>
 
+## Use your framework's router (SSR)
+
+`StackRouterProvider` owns history itself, so with SSR only the first page you open is rendered on the server.
+If your app already has a router, use an adapter instead: the framework keeps URLs, data loading, and SSR, and webview-kit stacks the pages it renders.
+
+- Opening `/detail/2` directly renders that page on the server, inside the stack markup, with the stack CSS inlined (styled first paint).
+- Every push runs the framework's own data loading (Next RSC request, React Router loader, SvelteKit `load`, Nuxt `useFetch`).
+- Pages underneath keep the params, URL, and data they were opened with while new pages slide over them.
+- Back/forward animate in the right direction, including after a refresh. `keepAlive` pages keep their state.
+- Navigate with the framework's links and router. `useStack()` adds `depth`, `canGoBack`, `isTransitioning`, `push`, `replace`, `reset`, `back`, `pop(n)`.
+- Shared props: `transition`, `duration`, `popStateTransition`, `maxWidth`, `maxMountedPages`, `safeArea`, `keepAlive`, `keepAliveLimit`, `onBackAtRoot`, `bridge`.
+
+<details>
+<summary><b>Next.js App Router</b></summary>
+
+```tsx
+// app/stack.tsx
+"use client";
+import { StackLayout } from "@ahnseungchan/webviewkit/next";
+
+export default function Stack({ children }: { children: React.ReactNode }) {
+  return (
+    <StackLayout keepAlive={(path) => path === "/form"}>{children}</StackLayout>
+  );
+}
+
+// app/layout.tsx
+<body>
+  <Stack>{children}</Stack>
+</body>;
+```
+
+Server components re-run on every push. Covered pages keep their `useParams()` / `usePathname()` through Next's internal router contexts, which may change between Next releases (verified on 16.4).
+
+</details>
+
+<details>
+<summary><b>React Router 7 (framework or data mode)</b></summary>
+
+```tsx
+// app/routes/stack.tsx, a layout route around your pages
+import { StackOutlet } from "@ahnseungchan/webviewkit/react-router";
+
+export default function StackLayout() {
+  return <StackOutlet keepAlive={(path) => path === "/form"} />;
+}
+```
+
+Covered pages keep their location and loader data through React Router's `UNSAFE_LocationContext` and `UNSAFE_DataRouterStateContext`.
+
+</details>
+
+<details>
+<summary><b>Nuxt / Vue Router</b></summary>
+
+```vue
+<!-- app.vue -->
+<template>
+  <StackRouterView v-slot="{ route }">
+    <NuxtPage :route="route" />
+  </StackRouterView>
+</template>
+```
+
+With plain Vue Router, use `<StackRouterView />` where `<RouterView />` was. Mark keep-alive pages with `definePageMeta({ keepAlive: true })` (or route `meta.keepAlive`). New pages slide in after their async data resolves.
+Nuxt fetches data from the client on navigation; only direct visits and refreshes render on the server.
+
+</details>
+
+<details>
+<summary><b>SvelteKit</b></summary>
+
+```svelte
+<!-- src/routes/+layout.svelte -->
+<script>
+  import { StackLayout } from "@ahnseungchan/webviewkit/sveltekit";
+  let { children } = $props();
+  const pages = import.meta.glob("./**/+page.svelte", { eager: true });
+</script>
+
+<StackLayout {pages}>{@render children()}</StackLayout>
+```
+
+SvelteKit only renders the current page, so the adapter mounts page components from `pages` itself.
+Read page values with `useStackPage()` or the `data` prop (`$app/state` `page` always shows the current URL).
+Limits: no per-route code splitting (eager glob), and nested `+layout.svelte` files below this layout are not rendered.
+
+</details>
+
 ## API
 
 Every binding exposes the same pieces. Names below are the React ones.
@@ -186,7 +279,7 @@ Differences in Vue and Svelte:
 
 Theme with CSS variables: `--wvk-page-bg`, `--wvk-dim-color`, `--wvk-edge-shadow`, `--wvk-header-bg`, `--wvk-header-border`, `--wvk-header-color`, `--wvk-back-color`.
 
-Full prop and hook reference: [docs/README.ko.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/README.ko.md) (Korean for now; an English reference PR is welcome).
+Full prop and hook reference: [docs/README.ko.md](https://github.com/Ahnseungc/webview-kit/blob/main/docs/README.ko.md) (Korean for now; an English reference PR is welcome).
 
 ## Other frameworks (`/core`)
 
@@ -228,7 +321,8 @@ navigator.subscribe(() => {
 On the entering page (`pageState === "enter"`), call `navigator.onTransitionStart()` on `animationstart` and `navigator.endTransition()` on `animationend` (filter with `isOwnPageAnimation(event)`). Set `inert` on pages that are not on top.
 `connectStackBridge(navigator, options)` wires the native bridge the same way the `bridge` prop does.
 
-With server rendering, the stylesheet is added when the router mounts. To style the first paint, put `stackStyles` from `/core` in a `<style>` tag yourself.
+The React bindings and router adapters render the stylesheet inline, so server-rendered HTML is styled on first paint. With a custom binding, put `stackStyles` in a `<style data-webviewkit>` tag yourself.
+For a framework router, use `createRouterStack` (call `sync()` on each location change) with `createRouterStackActions` and `connectRouterStackBridge`, as the adapters above do.
 
 ## Native bridge
 
@@ -245,7 +339,7 @@ With server rendering, the stylesheet is added when the router mounts. To style 
 - Only same-origin paths are accepted by default (`javascript:` and external URLs are rejected).
 - The bridge client (`createWebViewBridgeClient`, `installBridgeHost`, ...) is also exported from `/core` for apps without a UI framework.
 
-Protocol: [docs/native-bridge-protocol.md](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/native-bridge-protocol.md)
+Protocol: [docs/native-bridge-protocol.md](https://github.com/Ahnseungc/webview-kit/blob/main/docs/native-bridge-protocol.md)
 
 ### iOS edge swipe tip
 
@@ -269,4 +363,4 @@ Releases: bump `packages/core/package.json` and `CHANGELOG.md`, then push a `v<v
 
 ## License
 
-[MIT](https://github.com/Ahnseungc/WebViewKit/blob/main/LICENSE)
+[MIT](https://github.com/Ahnseungc/webview-kit/blob/main/LICENSE)

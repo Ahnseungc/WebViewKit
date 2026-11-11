@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  // GitHub Pages 는 /WebViewKit/ 하위에 배포한다 (.github/workflows/pages.yml)
+  // GitHub Pages 는 /webview-kit/ 하위에 배포한다 (.github/workflows/pages.yml)
   base: process.env.DEMO_BASE ?? "/",
   plugins: [react()],
   resolve: {
