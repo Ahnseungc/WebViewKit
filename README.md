@@ -6,12 +6,27 @@
 
 **Native-like stack navigation for web apps that run inside a WebView. Works with React, Vue, Svelte, or plain JavaScript.**
 
-Hybrid apps (React Native WebView, Flutter InAppWebView, or a plain mobile browser) usually feel like a website:
-pages swap instantly, back resets scroll, and the hardware back button does odd things.
-WebViewKit gives your pages an iOS-style push/back stack on top of `history.pushState`,
-so screens slide in and out like a native app while URLs, browser back, and deep links keep working.
+<p align="center">
+  <a href="https://ahnseungc.github.io/WebViewKit/"><img src="https://raw.githubusercontent.com/Ahnseungc/WebViewKit/main/docs/assets/demo.gif" width="300" alt="WebViewKit demo: pages slide in on push and slide out on back, with the stack shown in a devtools overlay" /></a>
+</p>
 
-**[Live demo →](https://ahnseungc.github.io/WebViewKit/)** (open it on your phone)
+<p align="center">
+  <b><a href="https://ahnseungc.github.io/WebViewKit/">Live demo →</a></b> (open it on your phone)
+</p>
+
+## Why
+
+A web app inside a WebView usually feels like a website. WebViewKit makes it feel like the native screens around it.
+
+| In a plain WebView                                   | With WebViewKit                                                    |
+| ---------------------------------------------------- | ------------------------------------------------------------------ |
+| Pages swap instantly                                 | Pages slide in and out like iOS screens                            |
+| Going back loses scroll position and form input      | `keepAlive` pages keep scroll, inputs, and state                   |
+| Android hardware back closes the app or does nothing | Back pops the web stack first, and the app closes only at the root |
+| A deep link to `/detail/3` has nothing to go back to | Deep links restore the stack: `[root, /detail/3]`                  |
+
+It sits on top of `history.pushState`, so URLs, browser back, and refresh keep working.
+Works in React Native WebView, Flutter InAppWebView, or a plain mobile browser.
 
 [한국어 문서](https://github.com/Ahnseungc/WebViewKit/blob/main/docs/README.ko.md)
 
@@ -79,7 +94,8 @@ export default function App() {
 }
 ```
 
-### Vue 3
+<details>
+<summary><b>Vue 3</b></summary>
 
 ```ts
 import { createApp, defineComponent, h } from "vue";
@@ -109,7 +125,10 @@ createApp(() =>
 ).mount("#app");
 ```
 
-### Svelte 5
+</details>
+
+<details>
+<summary><b>Svelte 5</b></summary>
 
 ```svelte
 <!-- App.svelte -->
@@ -138,6 +157,8 @@ createApp(() =>
 ```
 
 Svelte components ship as `.svelte` source and are compiled by your app's Svelte plugin (runes, Svelte 5 only).
+
+</details>
 
 ## API
 
