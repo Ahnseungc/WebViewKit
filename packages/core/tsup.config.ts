@@ -7,6 +7,7 @@ export default defineConfig({
     "src/vue.ts",
     "src/react-router.tsx",
     "src/next.tsx",
+    "src/vue-router.ts",
   ],
   format: ["cjs", "esm"],
   dts: { compilerOptions: { composite: false, incremental: false } },
@@ -14,7 +15,7 @@ export default defineConfig({
   target: "es2018",
   sourcemap: true,
   clean: true,
-  external: ["react", "react-dom", "react-router", "next", "vue"],
+  external: ["react", "react-dom", "react-router", "next", "vue", "vue-router"],
   esbuildOptions(options) {
     options.jsx = "automatic";
   },
