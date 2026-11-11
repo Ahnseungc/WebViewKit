@@ -33,6 +33,12 @@ export {
   prefersReducedMotion,
   watchReducedMotion,
 } from "./stack-router/reduced-motion";
+export {
+  createRouterStack,
+  type RouterLocation,
+  type RouterStack,
+  type RouterStackOptions,
+} from "./stack-router/router-stack";
 export type {
   PageState,
   StackEntry,
