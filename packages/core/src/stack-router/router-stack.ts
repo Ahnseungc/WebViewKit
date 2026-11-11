@@ -112,10 +112,16 @@ export function createRouterStack(
     return index !== undefined && topIndex !== undefined && index < topIndex;
   };
 
-  /** keepAlive 보관본(또는 지워질 스택 위 keepAlive)을 같은 path 로 찾아 location key 를 잇는다 */
+  /**
+   * keepAlive 보관본을 같은 path 로 찾아 location key 를 잇는다.
+   * 외부 라우터는 전환 중에도 이동하므로, 아직 퇴장 애니메이션 중(leaving)인 keepAlive 도 본다
+   */
   const reviveFor = (location: RouterLocation) => {
     if (!location.keepAlive) return undefined;
-    const revived = findRevivable(state, location.path);
+    const leaving = [...state.leaving]
+      .reverse()
+      .find((entry) => entry.keepAlive && entry.path === location.path);
+    const revived = findRevivable(state, location.path) ?? leaving;
     if (revived) aliases.set(location.key, revived.key);
     return revived;
   };

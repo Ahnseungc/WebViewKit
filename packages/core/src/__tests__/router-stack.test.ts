@@ -111,6 +111,22 @@ describe("createRouterStack", () => {
     expect(states(stack)).toEqual(["a:covered", "b:idle"]);
   });
 
+  it("퇴장 애니메이션 중인 keepAlive 페이지로 다시 push 해도 그 인스턴스를 되살린다", () => {
+    const stack = createRouterStack(
+      { key: "a", path: "/a" },
+      { duration: 300, keepAliveLimit: 3 }
+    );
+    stack.sync({ key: "b", path: "/b", action: "push", keepAlive: true });
+    stack.endTransition();
+    stack.sync({ key: "a", path: "/a", action: "pop" });
+    expect(states(stack)).toEqual(["a:enter", "b:exit"]);
+
+    stack.sync({ key: "b2", path: "/b", action: "push", keepAlive: true });
+
+    expect(stack.entryKeyFor("b2")).toBe("b");
+    expect(states(stack)).toEqual(["a:exit", "b:enter"]);
+  });
+
   it("expectReset 뒤 sync 는 스택을 새 엔트리 하나로 비운다", () => {
     const stack = createRouterStack({ key: "a", path: "/a" }, { duration: 0 });
     stack.sync({ key: "b", path: "/b", action: "push" });
